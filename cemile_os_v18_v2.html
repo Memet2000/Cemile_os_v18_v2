@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cemile OS v18.0 "Windows 11 Edition"</title>
+<style>
+:root {
+  --accent:#0078d4; --accent2:#005ea2; --accent3:#003870;
+  --glow:rgba(0,120,212,0.8); --border:rgba(255,255,255,0.35);
+  --win-bg:rgba(32,44,60,0.72); --tb1:rgba(20,30,44,0.75); --tb2:rgba(10,16,26,0.88);
+  --overlay:rgba(0,0,0,0); --rad:12px;
+}
+*{box-sizing:border-box;user-select:none;margin:0;padding:0;font-family:'Segoe UI Variable',Segoe UI,-apple-system,Roboto,sans-serif;}
+body,html{width:100%;height:100%;overflow:hidden;background:var(--desk-bg,#0078d4);background-size:cover;background-position:center;position:relative;}
+.theme-overlay{position:absolute;inset:0;background:var(--overlay);pointer-events:none;z-index:1;transition:background .8s;}
+.wallpaper-wave{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(255,255,255,.12) 0%,transparent 50%),radial-gradient(ellipse at 70% 60%,rgba(0,200,255,.10) 0%,transparent 60%);pointer-events:none;z-index:1;}
+.watermark{position:absolute;bottom:55px;right:20px;color:rgba(255,255,255,.35);font-size:11px;text-align:right;line-height:1.5;font-weight:300;pointer-events:none;z-index:2;}
+
+/* ===== DESKTOP ===== */
+.desktop{position:absolute;inset:0 0 48px 0;z-index:5;padding:16px;}
+.desktop-item{position:absolute;width:88px;height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;border:1.5px solid transparent;border-radius:8px;transition:background .15s,border .15s,transform .15s,box-shadow .15s;z-index:10;}
+.desktop-item:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.28);box-shadow:inset 0 0 6px rgba(255,255,255,.15),0 4px 12px rgba(0,0,0,.25);transform:translateY(-2px);}
+.desktop-item:active{background:rgba(255,255,255,.22);transform:scale(.95);}
+.desktop-item .icon{font-size:36px;margin-bottom:5px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));transition:transform .15s;}
+.desktop-item:hover .icon{transform:scale(1.1);}
+.desktop-item .label{color:#fff;font-size:11.5px;text-shadow:1px 1px 3px rgba(0,0,0,.9);font-weight:400;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.desktop-item.selected{background:rgba(0,120,212,.3);border-color:rgba(0,120,212,.6);}
+.icon-pop{animation:iconPopIn .35s cubic-bezier(.2,.9,.3,1) backwards;}
+@keyframes iconPopIn{from{opacity:0;transform:scale(.4) translateY(14px);}to{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes iconRemove{to{opacity:0;transform:scale(.2) rotate(15deg);}}
+.desktop-hint{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);color:rgba(255,255,255,.5);font-size:13px;text-align:center;line-height:1.8;text-shadow:1px 1px 3px rgba(0,0,0,.6);pointer-events:none;z-index:3;}
+
+/* ===== SNAP OVERLAY ===== */
+.snap-overlay{position:absolute;inset:0 0 48px 0;display:none;z-index:9999;pointer-events:none;}
+.snap-zone{position:absolute;background:rgba(0,120,212,.25);border:2px solid rgba(0,120,212,.6);border-radius:8px;transition:all .15s;pointer-events:none;}
+.snap-zone.active{background:rgba(0,120,212,.4);}
+
+/* ===== WINDOWS ===== */
+.window{position:absolute;background:var(--win-bg);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid var(--border);border-radius:var(--rad) var(--rad) 6px 6px;box-shadow:0 12px 40px rgba(0,0,0,.55),inset 0 1px 1px rgba(255,255,255,.35);display:none;flex-direction:column;overflow:hidden;z-index:100;transition:box-shadow .2s;}
+.window.focused{box-shadow:0 16px 50px rgba(0,0,0,.65),inset 0 1px 1px rgba(255,255,255,.4),0 0 0 1px rgba(0,120,212,.4);}
+.window.minimized{transform:scale(.15) translateY(200%);opacity:0;pointer-events:none;transition:transform .25s,opacity .25s;}
+.window.maximized{left:0!important;top:0!important;width:100%!important;height:calc(100vh - 48px)!important;border-radius:0;}
+@keyframes winOpen{from{transform:scale(.88);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes winClose{to{transform:scale(.88);opacity:0;}}
+.win-opening{animation:winOpen .22s cubic-bezier(.1,.9,.2,1);}
+
+.window-header{padding:8px 10px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(255,255,255,.18) 0%,rgba(255,255,255,0) 100%);cursor:move;border-bottom:1px solid rgba(0,0,0,.12);flex-shrink:0;}
+.window-title{color:#fff;font-size:12.5px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px;}
+.window-controls{display:flex;gap:2px;}
+.win-btn{width:30px;height:20px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:4px;color:#fff;font-size:10px;cursor:pointer;transition:background .15s;}
+.win-btn:hover{background:rgba(255,255,255,.28);}
+.win-btn.close:hover{background:linear-gradient(to bottom,#f16767,#ce1c1c);border-color:#a81212;}
+.win-btn.maximize:hover{background:rgba(0,180,80,.6);}
+.win-btn.minimize:hover{background:rgba(255,200,0,.4);}
+.window-body{background:#f0f0f0;flex-grow:1;color:#333;position:relative;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+
+/* ===== WIN11 TASKBAR ===== */
+.taskbar{position:absolute;bottom:0;left:0;width:100%;height:48px;background:linear-gradient(to bottom,var(--tb1),var(--tb2));backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border-top:1px solid rgba(255,255,255,.25);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 -2px 12px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:10000;}
+
+/* Başlat butonu — Win11 modunda ortada, Win7 modunda solda */
+.taskbar-center{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;transition:left .5s cubic-bezier(.4,0,.2,1),transform .5s cubic-bezier(.4,0,.2,1);}
+.taskbar-center.win7-mode{left:4px;transform:translateX(0);}
+
+.start-btn{
+  width:40px;height:40px;border-radius:8px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:20px;transition:background .2s,transform .15s;
+  position:relative;
+}
+/* Win7 modunda Başlat butonu yuvarlak ve büyük — klasik orb stili */
+.taskbar-center.win7-mode .start-btn{
+  width:44px;height:44px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #5bbaff 0%, #0060c0 55%, #003a80 100%);
+  border:2px solid rgba(255,255,255,.5);
+  box-shadow:0 2px 8px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,255,255,.5);
+  font-size:22px;
+}
+.taskbar-center.win7-mode .start-btn:hover{
+  background:radial-gradient(circle at 40% 35%, #7dcfff 0%, #1878e0 55%, #004aaa 100%);
+  transform:scale(1.06);filter:brightness(1.15);
+}
+
+.start-btn:hover{background:rgba(255,255,255,.18);transform:scale(1.05);}
+.start-btn:active{background:rgba(255,255,255,.28);}
+.taskbar-sep{width:1px;height:22px;background:rgba(255,255,255,.2);margin:0 4px;}
+
+/* Taskbar sağ tık menüsüne Win7 seçeneği */
+.ctx-item.win7-option{color:#7dcfff;}
+.ctx-item.win7-option:hover{background:rgba(0,120,212,.4);}
+.tb-app-btn{min-width:40px;height:40px;padding:0 8px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:6px;cursor:pointer;transition:background .15s,border .15s;position:relative;}
+.tb-app-btn:hover{background:rgba(255,255,255,.18);}
+.tb-app-btn.active{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.3);}
+.tb-app-btn .tb-icon{font-size:20px;}
+.tb-app-btn .tb-label{color:#fff;font-size:11px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tb-app-btn::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:16px;height:2.5px;border-radius:2px;background:var(--accent);opacity:0;transition:opacity .2s;}
+.tb-app-btn.active::after{opacity:1;}
+.tb-app-btn.minimized-state::after{width:6px;opacity:.6;}
+
+.systray-area{display:flex;align-items:center;gap:6px;color:#fff;}
+.systray-btn{padding:4px 6px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:3px;font-size:12px;transition:background .15s;}
+.systray-btn:hover{background:rgba(255,255,255,.15);}
+.tb-clock{text-align:center;color:#fff;cursor:pointer;padding:3px 6px;border-radius:6px;transition:background .15s;}
+.tb-clock:hover{background:rgba(255,255,255,.15);}
+.tb-clock .tb-time{font-size:12.5px;font-weight:500;}
+.tb-clock .tb-date{font-size:10px;opacity:.8;}
+.tb-widgets-btn{width:36px;height:36px;border-radius:6px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:background .2s;}
+.tb-widgets-btn:hover{background:rgba(255,255,255,.15);}
+
+/* ===== BAŞLAT MENÜSÜ — tek blok, Win11 ve Win7 modunu destekler ===== */
+.start-menu{
+  position:absolute;
+  bottom:48px;
+  width:520px;height:500px;
+  background:rgba(10,20,40,0.97);
+  backdrop-filter:blur(20px) saturate(130%);
+  -webkit-backdrop-filter:blur(20px) saturate(130%);
+  border:1px solid var(--border);
+  border-radius:8px 8px 4px 4px;
+  box-shadow:0 -4px 30px rgba(0,0,0,.8);
+  display:flex;flex-direction:column;
+  z-index:9999;opacity:0;pointer-events:none;
+  overflow:hidden;
+
+  /* Win11 default: yatay ortalı, gizli konumda */
+  left:50%;
+  transform:translateX(-50%) translateY(20px);
+  transition:
+    left .45s cubic-bezier(.4,0,.2,1),
+    transform .45s cubic-bezier(.4,0,.2,1),
+    opacity .25s ease;
+}
+
+/* Win11 modu: açık */
+.start-menu.show{
+  transform:translateX(-50%) translateY(0);
+  opacity:1;pointer-events:auto;
+}
+
+/* Win7 modu: sola hizalanmış, gizli */
+.start-menu.win7-pos{
+  left:0;
+  transform:translateX(0) translateY(20px);
+  border-radius:8px 8px 0 0;
+}
+
+/* Win7 modu: açık */
+.start-menu.win7-pos.show{
+  transform:translateX(0) translateY(0);
+  opacity:1;pointer-events:auto;
+}
+
+/* Ana panel (sol liste + sağ panel yan yana) */
+.sm-main-row{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+/* Sol liste */
+.sm-left{
+  width:58%;background:rgba(255,255,255,.06);
+  display:flex;flex-direction:column;
+  overflow:hidden;border-right:1px solid rgba(255,255,255,.08);
+  transition:transform .3s cubic-bezier(.2,.9,.3,1);
+  position:relative;
+}
+/* Sağ panel — "Tüm Programlar" açıldığında slide in */
+.sm-right{
+  flex:1;background:rgba(0,0,0,.25);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+
+/* Tüm Programlar alt menüsü */
+.sm-allprograms{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  background:rgba(5,10,22,.98);
+  transform:translateX(-100%);
+  transition:transform .3s cubic-bezier(.2,.9,.3,1);
+  display:flex;flex-direction:column;
+  overflow:hidden;z-index:5;
+}
+.sm-allprograms.open{transform:translateX(0);}
+
+.sm-ap-header{
+  padding:10px 14px;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);
+  text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;
+}
+.sm-ap-back{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  color:#fff;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer;
+  transition:background .15s;
+}
+.sm-ap-back:hover{background:rgba(255,255,255,.22);}
+.sm-ap-list{flex:1;overflow-y:auto;padding:6px;}
+.sm-ap-item{
+  display:flex;align-items:center;gap:10px;padding:7px 10px;
+  border-radius:5px;cursor:pointer;color:#e8e8e8;font-size:12.5px;
+  transition:background .12s;
+}
+.sm-ap-item:hover{background:rgba(0,120,212,.35);}
+.sm-ap-item .ap-icon{font-size:18px;width:24px;text-align:center;}
+
+/* Sol listedeki öğeler */
+.sm-list{flex:1;overflow-y:auto;padding:8px 6px;}
+.sm-item{
+  display:flex;align-items:center;gap:10px;padding:7px 10px;
+  border-radius:5px;cursor:pointer;color:#e8e8e8;font-size:12.5px;
+  transition:background .12s;
+}
+.sm-item:hover{background:rgba(0,120,212,.35);}
+.sm-item .si-icon{font-size:20px;width:26px;text-align:center;}
+.sm-item .si-name{flex:1;}
+.sm-item .si-arrow{color:rgba(255,255,255,.3);font-size:10px;}
+.sm-divider{height:1px;background:rgba(255,255,255,.08);margin:5px 10px;}
+.sm-allprog-btn{
+  padding:8px 14px;font-size:12px;color:rgba(255,255,255,.65);
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+  border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;
+  transition:background .12s,color .12s;
+}
+.sm-allprog-btn:hover{background:rgba(0,120,212,.25);color:#fff;}
+
+/* Sağ panel içeriği */
+.sm-right-user{
+  padding:14px 16px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;
+}
+.sm-right-avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#00bcff);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.sm-right-name{color:#fff;font-size:13px;font-weight:600;}
+.sm-right-list{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+.sm-right-item{
+  padding:6px 8px;border-radius:5px;color:#d0d8e8;font-size:12px;
+  cursor:pointer;transition:background .12s;display:flex;align-items:center;gap:8px;
+}
+.sm-right-item:hover{background:rgba(0,120,212,.35);color:#fff;}
+.sm-right-sep{height:1px;background:rgba(255,255,255,.08);margin:5px 4px;}
+.sm-right-bottom{
+  padding:8px 14px;display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid rgba(255,255,255,.1);flex-shrink:0;
+}
+
+/* Arama kutusu Win7 tarzı — altta */
+.sm-searchbar{
+  padding:8px 10px;background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.sm-searchbar-inp{
+  flex:1;padding:6px 12px;border-radius:20px;
+  border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);
+  color:#fff;font-size:12px;outline:none;transition:border .2s,background .2s;
+}
+.sm-searchbar-inp::placeholder{color:rgba(255,255,255,.4);}
+.sm-searchbar-inp:focus{border-color:rgba(0,120,212,.8);background:rgba(255,255,255,.15);}
+.sm-search-results{
+  position:absolute;bottom:100%;left:0;width:58%;
+  background:rgba(5,10,22,.98);border:1px solid rgba(255,255,255,.15);
+  border-radius:8px 8px 0 0;max-height:260px;overflow-y:auto;
+  display:none;z-index:10;
+}
+.sm-search-results.show{display:block;}
+.sm-sr-item{
+  display:flex;align-items:center;gap:10px;padding:8px 12px;
+  color:#e8e8e8;font-size:12px;cursor:pointer;transition:background .12s;
+}
+.sm-sr-item:hover{background:rgba(0,120,212,.35);}
+.sm-sr-icon{font-size:18px;width:22px;text-align:center;}
+
+/* ===== ACTION CENTER ===== */
+.action-center{position:absolute;bottom:54px;right:0;width:360px;background:rgba(22,26,34,.92);backdrop-filter:blur(30px) saturate(130%);-webkit-backdrop-filter:blur(30px) saturate(130%);border:1px solid var(--border);border-radius:14px 14px 0 0;padding:16px;z-index:9998;display:flex;flex-direction:column;gap:12px;opacity:0;pointer-events:none;transform:translateY(16px);transition:opacity .25s,transform .25s;}
+.action-center.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+.ac-header{display:flex;justify-content:space-between;align-items:center;}
+.ac-title{color:#fff;font-size:13px;font-weight:600;}
+.ac-date-full{color:rgba(255,255,255,.7);font-size:11px;}
+.qs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.qs-tile{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:12px 10px;cursor:pointer;transition:background .2s,border .2s;display:flex;flex-direction:column;gap:4px;}
+.qs-tile:hover{background:rgba(255,255,255,.18);}
+.qs-tile.on{background:rgba(0,120,212,.35);border-color:rgba(0,120,212,.6);}
+.qs-tile.on:hover{background:rgba(0,120,212,.5);}
+.qs-icon{font-size:18px;}
+.qs-label{color:#fff;font-size:10.5px;font-weight:500;}
+.qs-state{color:rgba(255,255,255,.55);font-size:9.5px;}
+.ac-slider-row{display:flex;align-items:center;gap:10px;padding:4px 0;}
+.ac-slider-icon{font-size:16px;color:#fff;}
+.ac-slider{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:rgba(255,255,255,.2);outline:none;cursor:pointer;}
+.ac-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.3);}
+.ac-notifs{border-top:1px solid rgba(255,255,255,.1);padding-top:10px;}
+.ac-notif{background:rgba(255,255,255,.07);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;}
+.ac-notif-icon{font-size:18px;flex-shrink:0;}
+.ac-notif-title{color:#fff;font-size:11.5px;font-weight:600;}
+.ac-notif-body{color:rgba(255,255,255,.65);font-size:10.5px;margin-top:2px;line-height:1.4;}
+
+/* ===== WIDGETS PANEL ===== */
+.widgets-panel{position:absolute;top:0;left:0;width:360px;height:calc(100% - 48px);background:rgba(22,26,34,.94);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-right:1px solid var(--border);z-index:9997;display:flex;flex-direction:column;gap:0;opacity:0;pointer-events:none;transform:translateX(-20px);transition:opacity .3s,transform .3s;overflow-y:auto;}
+.widgets-panel.show{opacity:1;pointer-events:auto;transform:translateX(0);}
+.wp-header{padding:20px 18px 12px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.wp-h-title{color:#fff;font-size:15px;font-weight:600;}
+.wp-h-close{color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:2px 6px;border-radius:4px;transition:background .15s;}
+.wp-h-close:hover{background:rgba(255,255,255,.1);}
+.widget{margin:0 14px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;flex-shrink:0;}
+.widget-title{color:rgba(255,255,255,.65);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;}
+.w-weather-main{display:flex;align-items:center;gap:12px;}
+.w-weather-icon{font-size:44px;}
+.w-weather-temp{color:#fff;font-size:36px;font-weight:300;}
+.w-weather-info{color:rgba(255,255,255,.7);font-size:12px;line-height:1.5;}
+.w-weather-days{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:10px;}
+.w-day{text-align:center;background:rgba(255,255,255,.06);border-radius:8px;padding:6px 2px;}
+.w-day-name{color:rgba(255,255,255,.6);font-size:9.5px;}
+.w-day-icon{font-size:16px;margin:3px 0;}
+.w-day-temp{color:#fff;font-size:11px;font-weight:500;}
+.w-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.w-cal-day{text-align:center;padding:4px 2px;font-size:11px;color:rgba(255,255,255,.7);border-radius:4px;cursor:pointer;}
+.w-cal-day.header{color:rgba(255,255,255,.45);font-weight:600;font-size:10px;}
+.w-cal-day.today{background:var(--accent);color:#fff;border-radius:6px;}
+.w-cal-day.other{color:rgba(255,255,255,.3);}
+.w-cal-day:not(.header):not(.other):hover{background:rgba(255,255,255,.1);}
+.w-news-item{display:flex;flex-direction:column;gap:3px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07);}
+.w-news-item:last-child{border-bottom:none;}
+.w-news-title{color:#fff;font-size:11.5px;font-weight:500;line-height:1.3;}
+.w-news-src{color:rgba(255,255,255,.45);font-size:9.5px;}
+.w-perf-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+.w-perf-label{color:rgba(255,255,255,.65);font-size:11px;}
+.w-perf-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;margin:0 8px;}
+.w-perf-bar{height:100%;border-radius:3px;transition:width .8s ease;}
+.w-perf-val{color:#fff;font-size:11px;font-weight:500;min-width:32px;text-align:right;}
+
+/* ===== VIRTUAL DESKTOPS ===== */
+.vdesk-overlay{position:absolute;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);z-index:9995;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.vdesk-overlay.show{display:flex;}
+.vdesk-title{color:#fff;font-size:18px;font-weight:300;letter-spacing:1px;}
+.vdesk-grid{display:flex;gap:16px;}
+.vdesk-thumb{width:200px;height:130px;border:2px solid rgba(255,255,255,.25);border-radius:10px;overflow:hidden;cursor:pointer;transition:border .2s,transform .2s;position:relative;background:rgba(255,255,255,.04);}
+.vdesk-thumb:hover{border-color:var(--accent);transform:scale(1.04);}
+.vdesk-thumb.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,120,212,.4);}
+.vdesk-label{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);color:#fff;font-size:11px;background:rgba(0,0,0,.5);padding:2px 8px;border-radius:10px;}
+.vdesk-add{width:200px;height:130px;border:2px dashed rgba(255,255,255,.2);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border .2s,background .2s;color:rgba(255,255,255,.5);font-size:13px;}
+.vdesk-add:hover{border-color:var(--accent);background:rgba(0,120,212,.1);color:#fff;}
+.vdesk-close-btn{position:absolute;top:16px;right:16px;color:#fff;font-size:24px;cursor:pointer;opacity:.6;transition:opacity .15s;}
+.vdesk-close-btn:hover{opacity:1;}
+
+/* ===== SIDEBAR GADGETS ===== */
+.sidebar-panel{position:absolute;top:24px;right:24px;width:155px;display:flex;flex-direction:column;gap:10px;z-index:2;transition:transform .35s cubic-bezier(.2,.9,.3,1),opacity .35s;}
+.sidebar-panel.collapsed{transform:translateX(200px);opacity:0;pointer-events:none;}
+.sidebar-toggle{position:absolute;top:24px;right:4px;width:20px;height:36px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.22);border-radius:6px 0 0 6px;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;transition:background .2s;}
+.sidebar-toggle:hover{background:rgba(0,0,0,.4);}
+.gadget-card{background:rgba(0,0,0,.2);border-radius:10px;border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(4px);padding:11px;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.gadget-label{font-size:9.5px;color:rgba(255,255,255,.65);letter-spacing:.4px;text-align:center;}
+.gadget-clock{font-size:17px;color:#fff;font-weight:700;text-shadow:1px 1px 2px #000;}
+.perf-graph{width:100%;height:38px;background:#041804;border:1px solid #00ff00;display:flex;align-items:flex-end;gap:1px;padding:2px;overflow:hidden;}
+.graph-bar{width:4px;background:#00ff00;transition:height .3s;}
+.disk-bar-wrap{width:100%;height:13px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.18);border-radius:6px;overflow:hidden;}
+.disk-bar{height:100%;width:0%;background:#3ad162;transition:width 1.2s,background .6s;}
+.disk-text{font-size:9.5px;color:rgba(255,255,255,.82);text-align:center;}
+.net-status{font-size:11.5px;color:#fff;text-align:center;}
+
+/* ===== STORE ===== */
+.store-grid{padding:12px;display:flex;flex-direction:column;gap:10px;background:#eef1f5;flex:1;overflow-y:auto;min-height:0;}
+.store-header{padding:12px 14px 8px;background:#fff;border-bottom:1px solid #dde3ea;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.store-search-inp{flex:1;padding:7px 12px;border:1px solid #cdd5e0;border-radius:8px;font-size:12px;outline:none;transition:border .2s;}
+.store-search-inp:focus{border-color:#2070c0;}
+.store-tabs{display:flex;gap:6px;flex-shrink:0;}
+.store-tab{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #d0d7e2;background:#f4f6f9;color:#555;transition:background .15s,border .15s;}
+.store-tab.active{background:#2070c0;color:#fff;border-color:#2070c0;}
+.store-card{background:#fff;border:1px solid #dde3ea;border-radius:10px;padding:11px;display:flex;flex-direction:column;gap:4px;transition:transform .15s,box-shadow .15s;animation:storeCardIn .3s cubic-bezier(.2,.9,.3,1) backwards;}
+@keyframes storeCardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.store-card:hover{transform:translateY(-2px);box-shadow:0 5px 14px rgba(0,0,0,.1);}
+.store-card-top{display:flex;align-items:center;justify-content:space-between;}
+.store-card-icon{font-size:28px;transition:transform .2s;}
+.store-card:hover .store-card-icon{transform:scale(1.1) rotate(-4deg);}
+.store-card-tag{font-size:9.5px;background:#e2eaf5;color:#2070c0;padding:2px 8px;border-radius:10px;font-weight:700;}
+.store-card-name{font-weight:700;font-size:13px;color:#222;}
+.store-card-desc{font-size:11px;color:#777;line-height:1.3;}
+.store-card-stars{font-size:10px;color:#f5a623;}
+.store-card-action{margin-top:4px;}
+.store-btn{width:100%;padding:6px;border:none;border-radius:6px;background:#2070c0;color:#fff;font-weight:700;font-size:12px;cursor:pointer;transition:background .15s,transform .1s;}
+.store-btn:hover{background:#155595;}
+.store-btn:active{transform:scale(.96);}
+.store-btn-installed{background:#3ad162;cursor:default;opacity:.9;}
+.store-btn-uninstall{background:#e04040;margin-top:4px;}
+.store-btn-uninstall:hover{background:#b81e1e;}
+.store-progress-wrap{width:100%;height:8px;background:#dde3ea;border-radius:4px;overflow:hidden;}
+.store-progress-bar{height:100%;background:linear-gradient(90deg,#2070c0,#4aa8ff);transition:width .25s;border-radius:4px;}
+.store-progress-text{font-size:10px;color:#555;margin-top:3px;text-align:center;}
+
+/* ===== PERSONALIZE ===== */
+.personalize-tabs{display:flex;background:#e8e8e8;border-bottom:1px solid #ccc;flex-shrink:0;}
+.pz-tab{flex:1;text-align:center;padding:8px;font-size:12px;font-weight:600;cursor:pointer;color:#555;border-bottom:3px solid transparent;transition:background .15s;}
+.pz-tab:hover{background:#ececec;}
+.pz-tab.active{color:#155595;border-bottom-color:#2070c0;background:#f7f7f7;}
+.pz-panel{display:none;flex:1;overflow:hidden;min-height:0;}
+.pz-panel.active{display:flex;flex-direction:column;}
+.wallpaper-selector{padding:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;overflow-y:auto;}
+.wp-thumb{border:2.5px solid #ccc;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;background:#fff;}
+.wp-thumb:hover{transform:scale(1.03);border-color:#2070c0;}
+.wp-thumb.selected{border-color:#2070c0;box-shadow:0 0 0 2px rgba(32,112,192,.3);}
+.wp-thumb img{width:100%;height:70px;object-fit:cover;display:block;}
+.wp-title{font-size:11px;text-align:center;padding:4px;background:#f0f0f0;font-weight:600;color:#444;}
+.theme-grid{padding:14px;display:flex;flex-wrap:wrap;gap:12px;overflow-y:auto;}
+.theme-swatch{text-align:center;cursor:pointer;}
+.theme-swatch-circle{width:52px;height:52px;border-radius:50%;margin:0 auto 5px;border:3px solid #ccc;transition:transform .15s,border-color .15s;box-shadow:inset 0 0 8px rgba(0,0,0,.25);}
+.theme-swatch:hover .theme-swatch-circle{transform:scale(1.08);}
+.theme-swatch.selected .theme-swatch-circle{border-color:#2070c0;box-shadow:0 0 0 3px rgba(32,112,192,.3),inset 0 0 8px rgba(0,0,0,.25);}
+.theme-swatch-label{font-size:10px;color:#444;font-weight:600;}
+.ts-aero{background:radial-gradient(circle,#3a9eff 0%,#1050a0 70%,#052050 100%);}
+.ts-night{background:radial-gradient(circle,#5a6a78 0%,#2a3138 70%,#0a0c0e 100%);}
+.ts-pink{background:radial-gradient(circle,#ff8fd0 0%,#c23f8e 70%,#4a0e30 100%);}
+.ts-sunset{background:radial-gradient(circle,#ff9f43 0%,#d63031 70%,#6c1010 100%);}
+.ts-forest{background:radial-gradient(circle,#55efc4 0%,#00b894 70%,#00583d 100%);}
+.ts-purple{background:radial-gradient(circle,#a29bfe 0%,#6c5ce7 70%,#2d1e8e 100%);}
+.accent-picker{padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+.accent-label{font-size:11px;font-weight:600;color:#555;}
+.accent-colors{display:flex;flex-wrap:wrap;gap:8px;}
+.accent-dot{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .15s,border-color .15s;}
+.accent-dot:hover{transform:scale(1.1);}
+.accent-dot.selected{border-color:#222;}
+
+/* ===== TASK MANAGER ===== */
+.taskmgr-body{background:#f0f0f0;height:100%;display:flex;flex-direction:column;}
+.taskmgr-tabs{display:flex;background:#e0e0e0;border-bottom:1px solid #ccc;padding:0 8px;flex-shrink:0;}
+.tm-tab{padding:8px 14px;font-size:11.5px;font-weight:600;color:#555;cursor:pointer;border-bottom:2.5px solid transparent;transition:color .15s,border .15s;}
+.tm-tab.active{color:#2070c0;border-bottom-color:#2070c0;}
+.taskmgr-head{display:grid;grid-template-columns:1.8fr 1fr .9fr .4fr 1fr;font-size:10px;font-weight:700;color:#555;background:#e8e8e8;padding:6px 10px;border-bottom:1px solid #ccc;flex-shrink:0;}
+.taskmgr-list{flex-grow:1;overflow-y:auto;padding:4px 0;}
+.taskmgr-empty{padding:30px;text-align:center;color:#888;font-size:13px;}
+.taskmgr-row{display:grid;grid-template-columns:1.8fr 1fr .9fr .4fr 1fr;align-items:center;gap:6px;padding:6px 10px;font-size:11px;color:#333;border-bottom:1px solid #e6e6e6;transition:background .2s;}
+.taskmgr-row:hover{background:#e8f4fc;}
+.taskmgr-row.frozen{background:rgba(224,64,64,.1);animation:tmFreeze 1.4s infinite;}
+@keyframes tmFreeze{0%,100%{background:rgba(224,64,64,.06);}50%{background:rgba(224,64,64,.2);}}
+.tm-name{display:flex;align-items:center;gap:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tm-status{font-weight:600;}
+.taskmgr-row.frozen .tm-status{color:#c81818;}
+.tm-bar-wrap{width:100%;height:7px;background:#d8d8d8;border-radius:3px;overflow:hidden;}
+.tm-bar{height:100%;transition:width .4s,background .4s;}
+.tm-cpu-val{font-family:monospace;font-size:11px;text-align:right;}
+.tm-end-btn,.tm-end-ghost{border:none;border-radius:4px;padding:3px 6px;font-size:10px;cursor:pointer;}
+.tm-end-btn{background:#d83a3a;color:#fff;font-weight:700;}
+.tm-end-btn:hover{background:#b81e1e;}
+.tm-end-ghost{background:#ddd;color:#555;}
+.tm-end-ghost:hover{background:#ccc;}
+.taskmgr-footer{padding:6px 10px;font-size:10px;color:#666;background:#e8e8e8;border-top:1px solid #ccc;display:flex;justify-content:space-between;flex-shrink:0;}
+.perf-tab{display:none;flex-direction:column;gap:12px;padding:14px;overflow-y:auto;}
+.perf-tab.active{display:flex;}
+.perf-chart-wrap{background:#fff;border:1px solid #dde;border-radius:8px;padding:12px;}
+.perf-chart-title{font-size:11px;font-weight:700;color:#444;margin-bottom:8px;display:flex;justify-content:space-between;}
+.mini-chart{width:100%;height:60px;background:#f8fafe;border:1px solid #e0e8f0;border-radius:4px;overflow:hidden;position:relative;}
+.mini-chart canvas{width:100%;height:100%;}
+
+/* ===== EXPLORER ===== */
+.explorer-body{display:flex;height:100%;background:#fff;flex-direction:column;}
+.explorer-toolbar{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f5f5f5;border-bottom:1px solid #ddd;flex-shrink:0;}
+.explorer-tb-btn{padding:4px 10px;border-radius:5px;border:1px solid #ccc;background:#fff;font-size:11.5px;cursor:pointer;transition:background .15s;}
+.explorer-tb-btn:hover{background:#e8f0fc;}
+.explorer-tb-addr{flex:1;padding:5px 10px;border:1px solid #ccc;border-radius:5px;background:#fff;font-size:11.5px;color:#333;outline:none;}
+.explorer-main-row{display:flex;flex:1;overflow:hidden;min-height:0;}
+.explorer-nav{width:130px;background:#f3f6fb;border-right:1px solid #d8d8d8;padding:8px 0;flex-shrink:0;overflow-y:auto;}
+.explorer-nav-item{padding:7px 12px;font-size:12px;color:#333;cursor:pointer;display:flex;align-items:center;gap:6px;border-left:3px solid transparent;transition:background .12s;}
+.explorer-nav-item:hover{background:#e5f1fb;}
+.explorer-nav-item.active{background:#d7e9fb;border-left-color:#2070c0;font-weight:700;}
+.explorer-content{flex-grow:1;display:flex;flex-direction:column;min-width:0;}
+.explorer-breadcrumb{padding:5px 10px;font-size:11px;color:#555;background:#f8f8f8;border-bottom:1px solid #e0e0e0;}
+.explorer-grid{flex-grow:1;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,76px);gap:8px;overflow-y:auto;align-content:flex-start;}
+.explorer-item{width:76px;padding:6px 3px;text-align:center;cursor:pointer;border-radius:6px;border:1px solid transparent;transition:background .12s,border .12s;}
+.explorer-item:hover{background:#e5f1fb;border-color:#bcd9f5;}
+.explorer-item.selected{background:#cce5ff;border-color:#90c6ff;}
+.explorer-item .ei-icon{font-size:28px;}
+.explorer-item .ei-name{font-size:10px;color:#333;margin-top:3px;word-break:break-word;line-height:1.2;}
+.explorer-status{padding:4px 10px;font-size:10px;color:#888;background:#f5f5f5;border-top:1px solid #ddd;flex-shrink:0;}
+
+/* ===== PAINT ===== */
+.paint-toolbar{background:#f0f0f0;padding:6px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #ccc;flex-wrap:wrap;flex-shrink:0;}
+.paint-tool-btn{padding:4px 8px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;transition:background .15s,border .15s;}
+.paint-tool-btn:hover{background:#e5eef8;border-color:#90b8e8;}
+.paint-tool-btn.active{background:#d0e8ff;border-color:#2070c0;color:#2070c0;font-weight:700;}
+.paint-canvas-wrap{background:#888;padding:10px;flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;position:relative;}
+canvas#paintCanvas{background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.35);cursor:crosshair;}
+
+/* ===== CALC ===== */
+.calc-body{background:#dfe4ea;padding:10px;display:flex;flex-direction:column;gap:8px;height:100%;}
+.calc-history{flex:1;overflow-y:auto;padding:4px 8px;min-height:0;}
+.calc-history-item{text-align:right;color:#888;font-size:11px;padding:2px 0;}
+.calc-history-item .ch-expr{font-size:11px;}
+.calc-history-item .ch-result{font-size:13px;color:#555;font-weight:600;}
+.calc-display{width:100%;font-size:26px;text-align:right;padding:10px;border:none;border-radius:6px;background:#1c2733;color:#7be88a;font-family:monospace;flex-shrink:0;}
+.calc-display.small{font-size:18px;}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;flex-shrink:0;}
+.calc-btn{border:none;border-radius:6px;background:#fff;font-size:15px;cursor:pointer;padding:8px 4px;box-shadow:0 1px 2px rgba(0,0,0,.15);transition:transform .08s,background .12s;}
+.calc-btn:hover{background:#f2f4f7;}
+.calc-btn:active{transform:scale(.9);background:#e2e6eb;}
+.calc-op{background:#c8d6e8;}
+.calc-op:hover{background:#b7c8de;}
+.calc-eq{background:#2070c0;color:#fff;grid-column:span 2;}
+.calc-eq:hover{background:#155595;}
+.calc-zero{grid-column:span 2;}
+
+/* ===== MUSIC ===== */
+.music-body{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;background:linear-gradient(160deg,#1c1f2b,#0c0d14);color:#fff;height:100%;}
+.music-art{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,#ff8fd0,#4a0e30);display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 6px 20px rgba(0,0,0,.4);animation:musicSpin 6s linear infinite;animation-play-state:paused;}
+.music-art.playing{animation-play-state:running;}
+@keyframes musicSpin{to{transform:rotate(360deg);}}
+.music-track-name{font-size:13px;font-weight:700;text-align:center;}
+.music-artist{font-size:11px;color:rgba(255,255,255,.55);}
+.music-eq{display:flex;align-items:flex-end;gap:3px;height:28px;}
+.music-eq span{width:5px;background:linear-gradient(to top,#4aa8ff,#ff8fd0);height:18%;border-radius:2px;transition:height .2s;}
+.music-progress-wrap{width:100%;height:4px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;cursor:pointer;}
+.music-progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#4aa8ff,#ff8fd0);transition:width .25s linear;}
+.music-time{display:flex;justify-content:space-between;width:100%;font-size:10px;color:rgba(255,255,255,.5);}
+.music-controls{display:flex;align-items:center;gap:12px;margin-top:4px;}
+.music-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:14px;width:34px;height:34px;border-radius:50%;cursor:pointer;transition:transform .15s,background .15s;}
+.music-btn:hover{background:rgba(255,255,255,.22);transform:scale(1.08);}
+.music-btn:active{transform:scale(.92);}
+.music-btn-main{width:46px;height:46px;font-size:18px;background:#ff8fd0;border-color:#ff8fd0;color:#2a0a1a;}
+.music-btn-main:hover{background:#ffa8db;}
+.music-vol-row{display:flex;align-items:center;gap:8px;width:100%;}
+.music-vol-icon{font-size:14px;color:rgba(255,255,255,.6);}
+.music-vol-slider{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:rgba(255,255,255,.2);outline:none;cursor:pointer;}
+.music-vol-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#ff8fd0;cursor:pointer;}
+
+/* ===== RPS ===== */
+.rps-body{padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center;background:#f4f6f9;height:100%;}
+.rps-score{font-size:12px;font-weight:700;color:#444;}
+.rps-streak{font-size:10px;color:#f5a623;font-weight:600;}
+.rps-arena{display:flex;align-items:center;gap:20px;}
+.rps-player{text-align:center;}
+.rps-emoji{font-size:46px;display:inline-block;transition:transform .2s;}
+.rps-emoji.rps-shake{animation:rpsShake .45s;}
+@keyframes rpsShake{0%,100%{transform:rotate(0);}25%{transform:rotate(-14deg);}75%{transform:rotate(14deg);}}
+.rps-label{font-size:11px;color:#888;margin-top:2px;}
+.rps-vs{font-size:12px;font-weight:700;color:#aaa;}
+.rps-result{font-size:14px;font-weight:700;color:#2070c0;min-height:20px;}
+.rps-choices{display:flex;gap:10px;}
+.rps-choice-btn{font-size:26px;background:#fff;border:1px solid #dde3ea;border-radius:50%;width:56px;height:56px;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.rps-choice-btn:hover{transform:scale(1.12) translateY(-3px);box-shadow:0 6px 14px rgba(0,0,0,.15);}
+.rps-choice-btn:active{transform:scale(.9);}
+.rps-history{font-size:10px;color:#aaa;text-align:center;}
+
+/* ===== SOLITAIRE ===== */
+.sol-body{background:#076324;height:100%;display:flex;flex-direction:column;padding:8px;gap:6px;overflow:hidden;}
+.sol-toolbar{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.sol-btn{padding:4px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;transition:background .15s;}
+.sol-btn:hover{background:rgba(255,255,255,.25);}
+.sol-score-display{color:#fff;font-size:12px;margin-left:auto;}
+.sol-top{display:flex;gap:10px;flex-shrink:0;}
+.sol-area{display:flex;gap:10px;flex:1;overflow:hidden;}
+.sol-col{display:flex;flex-direction:column;flex:1;position:relative;}
+.card{width:100%;max-width:64px;min-height:85px;border-radius:6px;border:1px solid rgba(0,0,0,.25);background:#fff;display:flex;flex-direction:column;align-items:flex-start;padding:3px 4px;cursor:pointer;font-size:12px;position:relative;box-shadow:0 2px 4px rgba(0,0,0,.2);user-select:none;transition:box-shadow .1s;}
+.card:hover{box-shadow:0 4px 8px rgba(0,0,0,.3);}
+.card.back{background:linear-gradient(135deg,#1e3a8a,#2563eb);border-color:#1e3a8a;}
+.card.empty-slot{background:rgba(0,80,30,.4);border:2px dashed rgba(255,255,255,.25);cursor:default;min-height:85px;}
+.card.selected{box-shadow:0 0 0 2px #fbbf24,0 4px 8px rgba(0,0,0,.3);}
+.card .c-top{font-weight:700;line-height:1;}
+.card .c-bot{position:absolute;bottom:3px;right:4px;transform:rotate(180deg);font-weight:700;line-height:1;}
+.card .c-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:22px;}
+.card.red{color:#dc2626;}
+.card.black{color:#111;}
+.stock-pile{display:flex;gap:-8px;flex-shrink:0;}
+.sol-foundation{display:flex;gap:8px;flex:1;justify-content:flex-end;}
+
+/* ===== NOTEPAD ===== */
+.notepad-toolbar{background:#f0f0f0;padding:4px 8px;border-bottom:1px solid #ddd;display:flex;gap:6px;flex-shrink:0;}
+.notepad-menu-btn{padding:3px 8px;font-size:11.5px;cursor:pointer;border-radius:3px;transition:background .12s;}
+.notepad-menu-btn:hover{background:#ddd;}
+.notepad-status{padding:3px 10px;background:#f0f0f0;border-top:1px solid #ddd;font-size:10px;color:#888;display:flex;justify-content:space-between;flex-shrink:0;}
+
+/* ===== CONTEXT MENUS ===== */
+.context-menu{position:absolute;background:rgba(28,30,38,.95);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;flex-direction:column;padding:4px;z-index:50000;border-radius:8px;min-width:180px;animation:ctxIn .15s cubic-bezier(.2,.9,.3,1);}
+@keyframes ctxIn{from{opacity:0;transform:scale(.94) translateY(-4px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.ctx-item{padding:7px 14px;font-size:12px;cursor:pointer;color:#eee;border-radius:5px;display:flex;align-items:center;gap:8px;transition:background .1s;}
+.ctx-item:hover{background:rgba(0,120,212,.4);}
+.ctx-item.danger:hover{background:rgba(220,50,50,.35);color:#ff9090;}
+.ctx-item .ctx-icon{font-size:14px;width:18px;text-align:center;}
+.ctx-item .ctx-shortcut{margin-left:auto;color:rgba(255,255,255,.35);font-size:10px;}
+.ctx-divider{height:1px;background:rgba(255,255,255,.1);margin:3px 4px;}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);display:none;align-items:center;justify-content:center;z-index:60000;transition:background .25s;}
+.modal-overlay.show{background:rgba(0,0,0,.5);}
+.modal-card{width:320px;background:#f4f6f9;border-radius:12px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.55);transform:scale(.85) translateY(10px);opacity:0;transition:transform .25s cubic-bezier(.2,.9,.3,1),opacity .25s;}
+.modal-overlay.show .modal-card{transform:scale(1) translateY(0);opacity:1;}
+.modal-title{background:linear-gradient(to bottom,#2070c0,#155595);color:#fff;padding:12px 16px;font-weight:700;font-size:13px;}
+.modal-body{padding:16px;font-size:12.5px;color:#333;max-height:280px;overflow-y:auto;}
+.modal-footer{padding:10px 14px;display:flex;justify-content:flex-end;gap:8px;background:#eceff3;border-top:1px solid #ddd;}
+.modal-btn{padding:7px 16px;border-radius:5px;border:1px solid #bbb;background:#fff;font-size:12px;cursor:pointer;transition:transform .1s,background .15s;}
+.modal-btn:hover{background:#f0f0f0;}
+.modal-btn:active{transform:scale(.95);}
+.modal-btn-primary{background:#2070c0;color:#fff;border-color:#155595;}
+.modal-btn-primary:hover{background:#155595;}
+.modal-btn-danger{background:#d83a3a;color:#fff;border-color:#a82020;}
+.modal-btn-danger:hover{background:#b81e1e;}
+.modal-props-table{width:100%;font-size:12px;border-collapse:collapse;}
+.modal-props-table td{padding:5px 8px;border-bottom:1px solid #e6e6e6;}
+.modal-props-table td:first-child{color:#777;width:40%;}
+
+/* ===== TOAST ===== */
+.toast-container{position:absolute;bottom:58px;right:16px;z-index:70000;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;}
+.toast{background:rgba(20,22,30,.96);color:#fff;padding:12px 16px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);animation:toastIn .3s cubic-bezier(.2,.9,.3,1);}
+.toast.toast-out{animation:toastOut .3s ease forwards;}
+.toast .t-icon{font-size:18px;flex-shrink:0;}
+.toast .t-msg{flex:1;}
+.toast .t-close{cursor:pointer;opacity:.5;font-size:16px;pointer-events:auto;}
+.toast .t-close:hover{opacity:1;}
+@keyframes toastIn{from{transform:translateX(50px) scale(.9);opacity:0;}to{transform:translateX(0) scale(1);opacity:1;}}
+@keyframes toastOut{to{transform:translateX(50px);opacity:0;}}
+
+/* ===== SHUTDOWN ===== */
+.shutdown-overlay{position:fixed;inset:0;background:rgba(0,0,0,0);display:none;align-items:center;justify-content:center;z-index:999999;transition:background 2s ease;}
+.shutdown-overlay.active{background:rgba(0,0,0,1);}
+.shutdown-inner{display:flex;flex-direction:column;align-items:center;gap:20px;opacity:0;transition:opacity 1.5s ease 1s;}
+.shutdown-overlay.active .shutdown-inner{opacity:1;}
+.shutdown-text{color:white;font-size:20px;font-weight:300;text-shadow:0 2px 10px rgba(0,0,0,.5);}
+.shutdown-spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);border-top-color:rgba(255,255,255,.7);border-radius:50%;animation:shutSpin 1s linear infinite;}
+@keyframes shutSpin{to{transform:rotate(360deg);}}
+
+/* ===== MINES ===== */
+.mines-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:6px 10px;background:#f0f0f0;border:2px inset #ccc;border-radius:4px;font-family:monospace;font-size:18px;font-weight:700;}
+.mines-display{background:#1c2733;color:#ff4444;padding:2px 6px;border-radius:3px;min-width:44px;text-align:center;}
+#mine-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:1px;background:#808080;padding:2px;border:3px inset #ccc;}
+.mine-cell{width:26px;height:26px;background:#c0c0c0;border:2px outset #e8e8e8;text-align:center;line-height:26px;font-size:12px;font-weight:700;cursor:pointer;user-select:none;transition:background .05s;}
+.mine-cell:hover:not(.revealed){background:#d0d0d0;}
+.mine-cell.revealed{background:#bdbdbd;border:1px inset #aaa;cursor:default;}
+.mine-cell.flagged{color:#ff0000;}
+.mine-cell.mine-hit{background:#ff4444;}
+
+/* ===== WEATHER ===== */
+.weather-body{padding:16px;background:linear-gradient(160deg,#1a4a8a,#0a2060);color:#fff;height:100%;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+.weather-main-row{display:flex;align-items:center;gap:16px;}
+.weather-big-icon{font-size:60px;}
+.weather-big-temp{font-size:52px;font-weight:200;}
+.weather-city{font-size:16px;font-weight:600;margin-bottom:4px;}
+.weather-desc{font-size:13px;color:rgba(255,255,255,.7);}
+.weather-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.weather-detail-item{background:rgba(255,255,255,.1);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:3px;}
+.wd-label{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.4px;}
+.wd-val{font-size:16px;font-weight:600;}
+.weather-forecast{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+.wf-day{min-width:60px;background:rgba(255,255,255,.1);border-radius:10px;padding:10px 8px;text-align:center;flex-shrink:0;}
+.wf-name{font-size:10px;color:rgba(255,255,255,.6);}
+.wf-icon{font-size:22px;margin:4px 0;}
+.wf-temp{font-size:12px;font-weight:600;}
+.wf-lo{font-size:10px;color:rgba(255,255,255,.5);}
+
+/* ===== CLOCK ===== */
+.clock-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;background:linear-gradient(160deg,#0f1220,#1a2040);color:#fff;height:100%;}
+.clock-analog{position:relative;width:140px;height:140px;}
+.clock-analog svg{width:100%;height:100%;}
+.clock-digital{font-size:36px;font-weight:200;letter-spacing:3px;font-family:monospace;}
+.clock-date-str{font-size:13px;color:rgba(255,255,255,.6);}
+.clock-tz{font-size:10px;color:rgba(255,255,255,.4);margin-top:4px;}
+.clock-alarm-row{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.clock-alarm-input{padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none;}
+.clock-alarm-btn{padding:6px 14px;border-radius:6px;border:1px solid rgba(0,120,212,.5);background:rgba(0,120,212,.3);color:#fff;font-size:12px;cursor:pointer;transition:background .15s;}
+.clock-alarm-btn:hover{background:rgba(0,120,212,.5);}
+.alarm-indicator{font-size:11px;color:#ffd700;}
+</style>
+</head>
+<body oncontextmenu="openDesktopContext(event)">
+<div class="wallpaper-wave"></div>
+<div class="theme-overlay" id="themeOverlay"></div>
+<div class="watermark" id="watermark">Cemile OS v18.0 "Win11 Edition"<br>Tüm hakları Cemile Admin'e aittir ✨</div>
+<div class="desktop" id="desktopArea" onclick="closeStartAndContext()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</div>
+<div class="sidebar-panel" id="sidebarPanel">
+  <div class="gadget-card">
+    <div class="gadget-clock" id="gadClock">00:00:00</div>
+    <div class="gadget-label">CPU KULLANIMI</div>
+    <div class="perf-graph" id="gadGraph"></div>
+  </div>
+  <div class="gadget-card">
+    <div class="gadget-label">DİSK (C:)</div>
+    <div class="disk-bar-wrap"><div class="disk-bar" id="diskBar"></div></div>
+    <div class="disk-text" id="diskText">— / 256 GB</div>
+  </div>
+  <div class="gadget-card">
+    <div class="gadget-label">AĞ</div>
+    <div class="net-status" id="netStatus">📶 Bağlı</div>
+  </div>
+  <div class="gadget-card" style="cursor:pointer;" onclick="openWin('win-weather')">
+    <div class="gadget-label">HAVA DURUMU</div>
+    <div style="font-size:24px;" id="gadWeatherIcon">⛅</div>
+    <div style="color:#fff;font-size:13px;font-weight:700;" id="gadWeatherTemp">18°C</div>
+  </div>
+</div>
+
+<!-- WINDOWS -->
+<div id="win-paint" class="window" style="width:580px;height:440px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-paint')">
+    <div class="window-title">🎨 MS Paint</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-paint')">─</button>
+      <button class="win-btn maximize" onclick="maximizeWin('win-paint')">□</button>
+      <button class="win-btn close" onclick="closeWin('win-paint')">✕</button>
+    </div>
+  </div>
+  <div class="window-body" style="background:#fff;">
+    <div class="paint-toolbar">
+      <button class="paint-tool-btn active" id="ptool-pen" onclick="setPaintTool('pen')">✏️ Kalem</button>
+      <button class="paint-tool-btn" id="ptool-brush" onclick="setPaintTool('brush')">🖌️ Fırça</button>
+      <button class="paint-tool-btn" id="ptool-spray" onclick="setPaintTool('spray')">💨 Sprey</button>
+      <button class="paint-tool-btn" id="ptool-line" onclick="setPaintTool('line')">╱ Çizgi</button>
+      <button class="paint-tool-btn" id="ptool-rect" onclick="setPaintTool('rect')">▭ Dikdörtgen</button>
+      <button class="paint-tool-btn" id="ptool-circle" onclick="setPaintTool('circle')">◯ Elips</button>
+      <button class="paint-tool-btn" id="ptool-fill" onclick="setPaintTool('fill')">🪣 Doldur</button>
+      <button class="paint-tool-btn" id="ptool-eraser" onclick="setPaintTool('eraser')">🧹 Silgi</button>
+      <button class="paint-tool-btn" id="ptool-text" onclick="setPaintTool('text')">T Metin</button>
+      <input type="color" id="paintColor" value="#000000" title="Renk">
+      <input type="color" id="paintColor2" value="#ffffff" title="Arkaplan Rengi" style="width:28px;height:28px;">
+      <select id="paintSize" style="padding:2px 4px;font-size:11px;">
+        <option value="1">1px</option><option value="2" selected>2px</option>
+        <option value="4">4px</option><option value="8">8px</option>
+        <option value="16">16px</option><option value="24">24px</option>
+      </select>
+      <button onclick="undoPaint()" style="padding:3px 7px;font-size:11px;border:1px solid #ccc;border-radius:4px;cursor:pointer;">↩ Geri Al</button>
+      <button onclick="clearCanvas()" style="padding:3px 7px;font-size:11px;border:1px solid #ccc;border-radius:4px;cursor:pointer;background:#fee;">Temizle</button>
+      <button onclick="savePaintImage()" style="padding:3px 7px;font-size:11px;border:1px solid #ccc;border-radius:4px;cursor:pointer;background:#e8f4e8;">İndir 💾</button>
+    </div>
+    <div class="paint-canvas-wrap"><canvas id="paintCanvas" width="520" height="350"></canvas></div>
+  </div>
+</div>
+
+<div id="win-mines" class="window" style="width:340px;height:460px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-mines')">
+    <div class="window-title">💣 Mayın Tarlası</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-mines')">─</button>
+      <button class="win-btn close" onclick="closeWin('win-mines')">✕</button>
+    </div>
+  </div>
+  <div class="window-body" style="background:#bdbdbd;padding:10px;flex-direction:column;gap:6px;">
+    <div class="mines-header">
+      <div class="mines-display" id="mine-count">010</div>
+      <button id="mine-reset" onclick="initMines()" style="font-size:22px;background:none;border:2px outset #ccc;padding:2px 8px;cursor:pointer;border-radius:3px;transition:transform .1s;" onmousedown="this.style.transform='scale(.9)'" onmouseup="this.style.transform='scale(1)'">😊</button>
+      <div class="mines-display" id="mine-timer">000</div>
+    </div>
+    <div id="mine-grid"></div>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <button onclick="initMines()" style="flex:1;padding:5px;font-size:11px;border:1px solid #aaa;border-radius:4px;cursor:pointer;background:#e0e0e0;font-weight:600;">🔄 Sıfırla</button>
+      <button onclick="openMineLearn()" style="flex:1;padding:5px;font-size:11px;border:1px solid #aaa;border-radius:4px;cursor:pointer;background:#d0e8ff;font-weight:600;">📖 Öğren</button>
+    </div>
+    <div style="font-size:10px;color:#555;text-align:center;">Sol tık: aç &nbsp;|&nbsp; Sağ tık: bayrak 🚩</div>
+  </div>
+</div>
+
+<div id="win-calc" class="window" style="width:240px;height:380px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-calc')">
+    <div class="window-title">🧮 Hesap Makinesi</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-calc')">─</button>
+      <button class="win-btn close" onclick="closeWin('win-calc')">✕</button>
+    </div>
+  </div>
+  <div class="window-body calc-body">
+    <div class="calc-history" id="calcHistory"></div>
+    <input type="text" id="calcDisplay" class="calc-display" value="0" readonly>
+    <div class="calc-grid">
+      <button class="calc-btn calc-op" onclick="calcClear()">C</button>
+      <button class="calc-btn calc-op" onclick="calcCE()">CE</button>
+      <button class="calc-btn calc-op" onclick="calcInput('%')">%</button>
+      <button class="calc-btn calc-op" onclick="calcInput('/')">÷</button>
+      <button class="calc-btn" onclick="calcInput('7')">7</button>
+      <button class="calc-btn" onclick="calcInput('8')">8</button>
+      <button class="calc-btn" onclick="calcInput('9')">9</button>
+      <button class="calc-btn calc-op" onclick="calcInput('*')">×</button>
+      <button class="calc-btn" onclick="calcInput('4')">4</button>
+      <button class="calc-btn" onclick="calcInput('5')">5</button>
+      <button class="calc-btn" onclick="calcInput('6')">6</button>
+      <button class="calc-btn calc-op" onclick="calcInput('-')">−</button>
+      <button class="calc-btn" onclick="calcInput('1')">1</button>
+      <button class="calc-btn" onclick="calcInput('2')">2</button>
+      <button class="calc-btn" onclick="calcInput('3')">3</button>
+      <button class="calc-btn calc-op" onclick="calcInput('+')">+</button>
+      <button class="calc-btn calc-op" onclick="calcPlusMinus()">±</button>
+      <button class="calc-btn calc-zero" onclick="calcInput('0')">0</button>
+      <button class="calc-btn" onclick="calcInput('.')">.</button>
+      <button class="calc-btn calc-eq" onclick="calcEquals()">=</button>
+      <button class="calc-btn calc-op" style="grid-column:span 2;" onclick="calcSqrt()">√</button>
+      <button class="calc-btn calc-op" style="grid-column:span 2;" onclick="calcBackspace()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<div id="win-rps" class="window" style="width:320px;height:340px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-rps')">
+    <div class="window-title">✊ Taş Kağıt Makas</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-rps')">─</button>
+      <button class="win-btn close" onclick="closeWin('win-rps')">✕</button>
+    </div>
+  </div>
+  <div class="window-body rps-body">
+    <div class="rps-score" id="rpsScore">Sen: 0 &nbsp;|&nbsp; Bilgisayar: 0</div>
+    <div class="rps-streak" id="rpsStreak">Seri: 0 🔥</div>
+    <div class="rps-arena">
+      <div class="rps-player"><div class="rps-emoji" id="rpsPlayerEmoji">❔</div><div class="rps-label">Sen</div></div>
+      <div class="rps-vs">VS</div>
+      <div class="rps-player"><div class="rps-emoji" id="rpsCpuEmoji">❔</div><div class="rps-label">Bilgisayar</div></div>
+    </div>
+    <div class="rps-result" id="rpsResult">Bir seçim yap!</div>
+    <div class="rps-choices">
+      <button class="rps-choice-btn" onclick="rpsPlay('rock')" title="Taş">✊</button>
+      <button class="rps-choice-btn" onclick="rpsPlay('paper')" title="Kağıt">✋</button>
+      <button class="rps-choice-btn" onclick="rpsPlay('scissors')" title="Makas">✌️</button>
+    </div>
+    <div class="rps-history" id="rpsHistory">—</div>
+    <button onclick="rpsReset()" style="font-size:11px;padding:4px 12px;border:1px solid #ddd;border-radius:4px;cursor:pointer;background:#f5f5f5;">Sıfırla</button>
+  </div>
+</div>
+
+<div id="win-music" class="window" style="width:290px;height:360px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-music')">
+    <div class="window-title">🎵 Müzik Çalar</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-music')">─</button>
+      <button class="win-btn close" onclick="closeWin('win-music')">✕</button>
+    </div>
+  </div>
+  <div class="window-body music-body">
+    <div class="music-art" id="musicArt">🎵</div>
+    <div class="music-track-name" id="musicTrackName">Cemile Lo-fi Beats</div>
+    <div class="music-artist" id="musicArtist">Cemile Records</div>
+    <div class="music-eq" id="musicEq"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="music-progress-wrap" onclick="seekMusic(event)"><div class="music-progress-bar" id="musicProgressBar"></div></div>
+    <div class="music-time"><span id="musicTimeCurrent">0:00</span><span id="musicTimeTotal">3:45</span></div>
+    <div class="music-controls">
+      <button class="music-btn" onclick="toggleShuffle()" id="shuffleBtn" title="Karıştır">🔀</button>
+      <button class="music-btn" onclick="musicPrev()">⏮️</button>
+      <button class="music-btn music-btn-main" id="musicPlayBtn" onclick="musicToggle()">▶️</button>
+      <button class="music-btn" onclick="musicNext()">⏭️</button>
+      <button class="music-btn" onclick="toggleRepeat()" id="repeatBtn" title="Tekrarla">🔁</button>
+    </div>
+    <div class="music-vol-row">
+      <span class="music-vol-icon">🔇</span>
+      <input class="music-vol-slider" type="range" min="0" max="100" value="70" id="musicVol" oninput="setMusicVol(this.value)">
+      <span class="music-vol-icon">🔊</span>
+    </div>
+  </div>
+</div>
+
+<div id="win-personalize" class="window" style="width:480px;height:400px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-personalize')">
+    <div class="window-title">🎨 Kişiselleştir</div>
+    <div class="window-controls">
+      <button class="win-btn close" onclick="closeWin('win-personalize')">✕</button>
+    </div>
+  </div>
+  <div class="window-body">
+    <div class="personalize-tabs">
+      <div class="pz-tab active" id="pzTab-bg" onclick="switchPzTab('bg')">🖼️ Arka Plan</div>
+      <div class="pz-tab" id="pzTab-theme" onclick="switchPzTab('theme')">🎨 Tema</div>
+      <div class="pz-tab" id="pzTab-accent" onclick="switchPzTab('accent')">🎯 Renk</div>
+    </div>
+    <div class="pz-panel active" id="pzPanel-bg">
+      <div class="wallpaper-selector" id="wallpaperSelector"></div>
+    </div>
+    <div class="pz-panel" id="pzPanel-theme">
+      <div class="theme-grid" id="themeGrid"></div>
+    </div>
+    <div class="pz-panel" id="pzPanel-accent">
+      <div class="accent-picker">
+        <div class="accent-label">Vurgu Rengi</div>
+        <div class="accent-colors" id="accentColors"></div>
+        <div class="accent-label" style="margin-top:8px;">Özel Renk</div>
+        <input type="color" id="accentCustom" value="#0078d4" style="width:60px;height:36px;border-radius:8px;border:1px solid #ccc;cursor:pointer;" oninput="applyAccentColor(this.value)">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="win-store" class="window" style="width:480px;height:440px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-store')">
+    <div class="window-title">🏪 Cemile App Store</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-store')">─</button>
+      <button class="win-btn close" onclick="closeWin('win-store')">✕</button>
+    </div>
+  </div>
+  <div class="window-body" style="overflow:hidden;display:flex;flex-direction:column;">
+    <div class="store-header">
+      <input class="store-search-inp" id="storeSearch" placeholder="🔍  Uygulama ara..." oninput="filterStore()">
+      <div class="store-tabs">
+        <div class="store-tab active" id="stab-all" onclick="filterStoreTab('all')">Tümü</div>
+        <div class="store-tab" id="stab-uygulama" onclick="filterStoreTab('uygulama')">Uygulama</div>
+        <div class="store-tab" id="stab-oyun" onclick="filterStoreTab('oyun')">Oyun</div>
+      </div>
+    </div>
+    <div class="store-grid" id="storeGrid"></div>
+  </div>
+</div>
+
+<div id="win-notepad" class="window" style="width:400px;height:300px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-notepad')">
+    <div class="window-title">📝 Not Defteri</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-notepad')">─</button>
+      <button class="win-btn maximize" onclick="maximizeWin('win-notepad')">□</button>
+      <button class="win-btn close" onclick="closeWin('win-notepad')">✕</button>
+    </div>
+  </div>
+  <div class="window-body" style="background:#fff;">
+    <div class="notepad-toolbar">
+      <div class="notepad-menu-btn" onclick="notepadNew()">Yeni</div>
+      <div class="notepad-menu-btn" onclick="notepadSave()">Kaydet 💾</div>
+      <div class="notepad-menu-btn" onclick="notepadWrap()">Kaydır</div>
+      <select id="notepadFont" onchange="changeNotepadFont()" style="font-size:11px;padding:2px 4px;border:1px solid #ccc;border-radius:3px;">
+        <option>Segoe UI</option><option>Monospace</option><option>Georgia</option><option>Arial</option>
+      </select>
+      <select id="notepadFontSize" onchange="changeNotepadFontSize()" style="font-size:11px;padding:2px 4px;border:1px solid #ccc;border-radius:3px;">
+        <option>11</option><option selected>13</option><option>15</option><option>18</option><option>22</option>
+      </select>
+    </div>
+    <textarea id="notepadText" style="width:100%;flex:1;border:none;padding:10px;resize:none;outline:none;font-family:'Segoe UI';font-size:13px;line-height:1.6;" oninput="updateNotepadStatus()" placeholder="Buraya yaz..."></textarea>
+    <div class="notepad-status">
+      <span id="notepadCharCount">0 karakter</span>
+      <span id="notepadLineCount">Satır 1, Sütun 1</span>
+    </div>
+  </div>
+</div>
+
+<div id="win-explorer" class="window" style="width:500px;height:360px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-explorer')">
+    <div class="window-title">📁 Cemile Explorer</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-explorer')">─</button>
+      <button class="win-btn maximize" onclick="maximizeWin('win-explorer')">□</button>
+      <button class="win-btn close" onclick="closeWin('win-explorer')">✕</button>
+    </div>
+  </div>
+  <div class="window-body" style="background:#fff;">
+    <div class="explorer-body">
+      <div class="explorer-toolbar">
+        <button class="explorer-tb-btn" onclick="explorerBack()">← Geri</button>
+        <button class="explorer-tb-btn" onclick="explorerUp()">↑ Yukarı</button>
+        <input class="explorer-tb-addr" id="explorerAddr" value="Bu Bilgisayar" readonly>
+        <button class="explorer-tb-btn" onclick="renderExplorer(currentExplorerFolder)">🔄</button>
+      </div>
+      <div class="explorer-main-row">
+        <div class="explorer-nav" id="explorerNav"></div>
+        <div class="explorer-content">
+          <div class="explorer-breadcrumb" id="explorerBreadcrumb">Bu Bilgisayar</div>
+          <div class="explorer-grid" id="explorerGrid"></div>
+          <div class="explorer-status" id="explorerStatus">0 öğe</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="win-taskmgr" class="window" style="width:440px;height:400px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-taskmgr')">
+    <div class="window-title">⚙️ Görev Yöneticisi</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-taskmgr')">─</button>
+      <button class="win-btn close" onclick="closeWin('win-taskmgr')">✕</button>
+    </div>
+  </div>
+  <div class="window-body taskmgr-body">
+    <div class="taskmgr-tabs">
+      <div class="tm-tab active" id="tm-tab-proc" onclick="switchTmTab('proc')">İşlemler</div>
+      <div class="tm-tab" id="tm-tab-perf" onclick="switchTmTab('perf')">Performans</div>
+    </div>
+    <div id="tm-proc-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
+      <div class="taskmgr-head"><div>Görev</div><div>Durum</div><div>CPU</div><div></div><div></div></div>
+      <div class="taskmgr-list" id="taskmgrList"></div>
+    </div>
+    <div id="tm-perf-view" class="perf-tab" style="flex:1;overflow-y:auto;padding:12px;display:none;">
+      <div class="perf-chart-wrap">
+        <div class="perf-chart-title"><span>CPU Kullanımı</span><span id="tmCpuPct" style="color:#3ad162;">—%</span></div>
+        <canvas id="perfCpuCanvas" width="380" height="70" style="width:100%;height:70px;background:#f8fafe;border:1px solid #e0e8f0;border-radius:4px;"></canvas>
+      </div>
+      <div class="perf-chart-wrap" style="margin-top:10px;">
+        <div class="perf-chart-title"><span>RAM Kullanımı</span><span id="tmRamPct" style="color:#4aa8ff;">—%</span></div>
+        <canvas id="perfRamCanvas" width="380" height="70" style="width:100%;height:70px;background:#f8fafe;border:1px solid #e0e8f0;border-radius:4px;"></canvas>
+      </div>
+    </div>
+    <div class="taskmgr-footer">
+      <span id="taskmgrCount">0 işlem</span>
+      <span>Cemile OS Çekirdeği ✅</span>
+    </div>
+  </div>
+</div>
+
+<div id="win-solitaire" class="window" style="width:600px;height:440px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-solitaire')">
+    <div class="window-title">🃏 Solitaire</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-solitaire')">─</button>
+      <button class="win-btn maximize" onclick="maximizeWin('win-solitaire')">□</button>
+      <button class="win-btn close" onclick="closeWin('win-solitaire')">✕</button>
+    </div>
+  </div>
+  <div class="window-body" style="background:transparent;">
+    <div class="sol-body" id="solBody">
+      <div class="sol-toolbar">
+        <button class="sol-btn" onclick="initSolitaire()">🔄 Yeni Oyun</button>
+        <button class="sol-btn" onclick="solUndo()">↩ Geri Al</button>
+        <button class="sol-btn" onclick="solHint()">💡 İpucu</button>
+        <div class="sol-score-display">Puan: <span id="solScore">0</span> | ⏱ <span id="solTime">0:00</span></div>
+      </div>
+      <div id="solGame"></div>
+    </div>
+  </div>
+</div>
+
+<div id="win-weather" class="window" style="width:340px;height:420px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-weather')">
+    <div class="window-title">⛅ Hava Durumu</div>
+    <div class="window-controls">
+      <button class="win-btn minimize" onclick="minimizeWin('win-weather')">─</button>
+      <button class="win-btn close" onclick="closeWin('win-weather')">✕</button>
+    </div>
+  </div>
+  <div class="window-body" style="overflow-y:auto;">
+    <div class="weather-body" id="weatherBody"></div>
+  </div>
+</div>
+
+<div id="win-clock" class="window" style="width:280px;height:320px;">
+  <div class="window-header" onmousedown="dragWindow(event,'win-clock')">
+    <div class="window-title">🕐 Saat & Alarm</div>
+    <div class="window-controls">
+      <button class="win-btn close" onclick="closeWin('win-clock')">✕</button>
+    </div>
+  </div>
+  <div class="window-body" style="background:#0f1220;">
+    <div class="clock-body">
+      <canvas id="clockCanvas" width="140" height="140"></canvas>
+      <div class="clock-digital" id="clockDigital">00:00:00</div>
+      <div class="clock-date-str" id="clockDateStr"></div>
+      <div class="clock-tz">Frankfurt, Türkiye (UTC+2)</div>
+      <div class="alarm-indicator" id="alarmIndicator" style="display:none;">🔔 Alarm: <span id="alarmTimeDisp"></span></div>
+      <div class="clock-alarm-row">
+        <input type="time" id="alarmInput" class="clock-alarm-input">
+        <button class="clock-alarm-btn" onclick="setAlarm()">Kur</button>
+        <button class="clock-alarm-btn" onclick="clearAlarm()" style="background:rgba(220,50,50,.3);border-color:rgba(220,50,50,.5);">İptal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENUS -->
+<div class="context-menu" id="desktopContext">
+  <div class="ctx-item" onclick="refreshDesktop()"><span class="ctx-icon">🔄</span>Yenile<span class="ctx-shortcut">F5</span></div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="openVDesks()"><span class="ctx-icon">🗔</span>Sanal Masaüstleri</div>
+  <div class="ctx-item" onclick="triggerAeroPeek()"><span class="ctx-icon">👁</span>Masaüstünü Göster</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="openWin('win-store');closeAllContextMenus()"><span class="ctx-icon">🏪</span>Uygulama Yükle</div>
+  <div class="ctx-item" onclick="openTaskManager();closeAllContextMenus()"><span class="ctx-icon">⚙️</span>Görev Yöneticisi</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="openWin('win-personalize');closeAllContextMenus()"><span class="ctx-icon">🎨</span>Kişiselleştir</div>
+</div>
+<div class="context-menu" id="taskbarContext">
+  <div class="ctx-item" onclick="openTaskManager();closeAllContextMenus()"><span class="ctx-icon">⚙️</span>Görev Yöneticisi</div>
+  <div class="ctx-item" onclick="openVDesks();closeAllContextMenus()"><span class="ctx-icon">🗔</span>Masaüstü Değiştir</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item win7-option" id="win7ModeBtn" onclick="toggleWin7Mode()"><span class="ctx-icon">🪟</span><span id="win7ModeBtnText">Windows 7 Modu</span></div>
+</div>
+<div class="context-menu" id="iconContext">
+  <div class="ctx-item" onclick="iconContextOpen()"><span class="ctx-icon">▶️</span>Aç</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item danger" onclick="iconContextDelete()"><span class="ctx-icon">🗑️</span>Kaldır</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="iconContextProperties()"><span class="ctx-icon">ℹ️</span>Özellikler</div>
+</div>
+
+<!-- WIN11 TASKBAR -->
+<div class="taskbar" oncontextmenu="openTaskbarContext(event)">
+  <div style="display:flex;align-items:center;gap:6px;">
+    <div class="tb-widgets-btn" onclick="toggleWidgets()" title="Widget'lar">⊞</div>
+  </div>
+  <div class="taskbar-center" id="taskbarCenter">
+    <div class="start-btn" onclick="toggleStartMenu(event)" title="Başlat">🪟</div>
+    <div class="taskbar-sep"></div>
+    <div class="tb-app-btn" onclick="openWin('win-store')" title="App Store"><span class="tb-icon">🏪</span></div>
+    <div class="tb-app-btn" onclick="openWin('win-weather')" title="Hava Durumu"><span class="tb-icon">⛅</span></div>
+    <div class="tb-app-btn" onclick="openWin('win-clock')" title="Saat"><span class="tb-icon">🕐</span></div>
+    <div class="taskbar-sep" id="tbSep2" style="display:none;"></div>
+    <div id="taskbarApps" style="display:flex;gap:6px;"></div>
+  </div>
+  <div class="systray-area">
+    <div class="systray-btn" onclick="openTaskManager()" title="Görev Yöneticisi">⚙️</div>
+    <div class="systray-btn" id="netSystray" onclick="toggleActionCenter()" title="Ağ">📶</div>
+    <div class="systray-btn" onclick="toggleActionCenter()">🔔</div>
+    <div class="tb-clock" onclick="toggleActionCenter()">
+      <div class="tb-time" id="liveTime">00:00</div>
+      <div class="tb-date" id="liveDate">1 Oca</div>
+    </div>
+  </div>
+</div>
+
+<!-- WIN7 START MENU -->
+<div class="start-menu" id="startMenu">
+  <!-- Ana İçerik: Sol + Sağ -->
+  <div class="sm-main-row">
+    <!-- SOL PANEL -->
+    <div class="sm-left" id="smLeft">
+      <!-- Normal sol liste -->
+      <div class="sm-list" id="smList"></div>
+      <div class="sm-divider"></div>
+      <div class="sm-allprog-btn" onclick="openAllPrograms()">
+        <span>📂</span> Tüm Programlar <span style="margin-left:auto;">›</span>
+      </div>
+
+      <!-- Tüm Programlar slide-in -->
+      <div class="sm-allprograms" id="smAllPrograms">
+        <div class="sm-ap-header">
+          <button class="sm-ap-back" onclick="closeAllPrograms()">← Geri</button>
+          Tüm Programlar
+        </div>
+        <div class="sm-ap-list" id="smApList"></div>
+      </div>
+    </div>
+
+    <!-- SAĞ PANEL -->
+    <div class="sm-right">
+      <div class="sm-right-user">
+        <div class="sm-right-avatar">👑</div>
+        <div>
+          <div class="sm-right-name">Cemile Admin</div>
+          <div style="color:rgba(255,255,255,.45);font-size:10px;">Yönetici</div>
+        </div>
+      </div>
+      <div class="sm-right-list" id="smRightList">
+        <div class="sm-right-item" onclick="openWin('win-explorer');toggleStartMenu()">📁 Belgeler</div>
+        <div class="sm-right-item" onclick="openWin('win-explorer');toggleStartMenu()">🖼️ Resimler</div>
+        <div class="sm-right-item" onclick="openWin('win-music');toggleStartMenu()">🎵 Müzik</div>
+        <div class="sm-right-sep"></div>
+        <div class="sm-right-item" onclick="openWin('win-personalize');toggleStartMenu()">🎨 Denetim Masası</div>
+        <div class="sm-right-item" onclick="openTaskManager();toggleStartMenu()">⚙️ Görev Yöneticisi</div>
+        <div class="sm-right-item" onclick="openWin('win-personalize');toggleStartMenu()">🖼️ Kişiselleştir</div>
+        <div class="sm-right-sep"></div>
+        <div class="sm-right-item" onclick="openWin('win-store');toggleStartMenu()">🏪 App Store</div>
+        <div class="sm-right-item" onclick="openWin('win-explorer');toggleStartMenu()">💻 Bilgisayar</div>
+      </div>
+      <div class="sm-right-bottom">
+        <div style="color:rgba(255,255,255,.4);font-size:10px;">Cemile OS v18</div>
+        <button class="sm-power" onclick="systemShutdown()">⏻ Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARAMA ÇUBUĞU — Win7'de ALT'ta -->
+  <div class="sm-searchbar">
+    <span style="color:rgba(255,255,255,.4);font-size:14px;">🔍</span>
+    <input class="sm-searchbar-inp" id="smSearchInput" placeholder="Program ve dosya ara..." oninput="smSearch()">
+  </div>
+  <!-- Arama sonuçları -->
+  <div class="sm-search-results" id="smSearchResults"></div>
+</div>
+
+<!-- ACTION CENTER -->
+<div class="action-center" id="actionCenter">
+  <div class="ac-header">
+    <div class="ac-title">Bildirim & Hızlı Ayarlar</div>
+    <div class="ac-date-full" id="acDateFull"></div>
+  </div>
+  <div class="qs-grid">
+    <div class="qs-tile on" id="qs-wifi" onclick="toggleQS('wifi')"><div class="qs-icon">📶</div><div class="qs-label">Wi-Fi</div><div class="qs-state" id="qs-wifi-state">Ev Ağı</div></div>
+    <div class="qs-tile" id="qs-bt" onclick="toggleQS('bt')"><div class="qs-icon">🔵</div><div class="qs-label">Bluetooth</div><div class="qs-state" id="qs-bt-state">Kapalı</div></div>
+    <div class="qs-tile on" id="qs-dark" onclick="toggleQS('dark')"><div class="qs-icon">🌙</div><div class="qs-label">Karanlık Mod</div><div class="qs-state" id="qs-dark-state">Açık</div></div>
+    <div class="qs-tile" id="qs-aeroplane" onclick="toggleQS('aeroplane')"><div class="qs-icon">✈️</div><div class="qs-label">Uçak Modu</div><div class="qs-state" id="qs-aeroplane-state">Kapalı</div></div>
+    <div class="qs-tile on" id="qs-notif" onclick="toggleQS('notif')"><div class="qs-icon">🔔</div><div class="qs-label">Bildirimler</div><div class="qs-state" id="qs-notif-state">Açık</div></div>
+    <div class="qs-tile" id="qs-focus" onclick="toggleQS('focus')"><div class="qs-icon">🎯</div><div class="qs-label">Odak</div><div class="qs-state" id="qs-focus-state">Kapalı</div></div>
+  </div>
+  <div class="ac-slider-row"><span class="ac-slider-icon">🔆</span><input class="ac-slider" type="range" min="20" max="100" value="80" id="brightnessSlider" oninput="setBrightness(this.value)"><span style="color:#fff;font-size:11px;" id="brightnessVal">80%</span></div>
+  <div class="ac-slider-row"><span class="ac-slider-icon">🔊</span><input class="ac-slider" type="range" min="0" max="100" value="65" id="volumeSlider" oninput="setVolume(this.value)"><span style="color:#fff;font-size:11px;" id="volumeVal">65%</span></div>
+  <div class="ac-notifs" id="acNotifList"></div>
+</div>
+
+<!-- WIDGETS PANEL -->
+<div class="widgets-panel" id="widgetsPanel">
+  <div class="wp-header"><div class="wp-h-title">Widget'lar</div><div class="wp-h-close" onclick="toggleWidgets()">✕</div></div>
+  <div class="widget">
+    <div class="widget-title">🌤 Hava Durumu — Frankfurt</div>
+    <div class="w-weather-main">
+      <div class="w-weather-icon" id="wdgWeatherIcon">⛅</div>
+      <div>
+        <div class="w-weather-temp" id="wdgWeatherTemp">18°C</div>
+        <div class="w-weather-info" id="wdgWeatherInfo">Parçalı bulutlu<br>Hissedilen: 16°C<br>Nem: %62</div>
+      </div>
+    </div>
+    <div class="w-weather-days" id="wdgForecast"></div>
+  </div>
+  <div class="widget">
+    <div class="widget-title">📅 Takvim</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <button onclick="calPrev()" style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer;">‹</button>
+      <div style="color:#fff;font-size:12px;font-weight:600;" id="wdgCalTitle"></div>
+      <button onclick="calNext()" style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer;">›</button>
+    </div>
+    <div class="w-cal-grid" id="wdgCalGrid"></div>
+  </div>
+  <div class="widget">
+    <div class="widget-title">📰 Haberler</div>
+    <div id="wdgNews"></div>
+  </div>
+  <div class="widget">
+    <div class="widget-title">📊 Sistem Performansı</div>
+    <div class="w-perf-row"><div class="w-perf-label">CPU</div><div class="w-perf-bar-wrap"><div class="w-perf-bar" id="wdgCpuBar" style="background:#3ad162;width:30%;"></div></div><div class="w-perf-val" id="wdgCpuVal">30%</div></div>
+    <div class="w-perf-row"><div class="w-perf-label">RAM</div><div class="w-perf-bar-wrap"><div class="w-perf-bar" id="wdgRamBar" style="background:#4aa8ff;width:55%;"></div></div><div class="w-perf-val" id="wdgRamVal">55%</div></div>
+    <div class="w-perf-row"><div class="w-perf-label">Disk</div><div class="w-perf-bar-wrap"><div class="w-perf-bar" id="wdgDiskBar" style="background:#ff8fd0;width:60%;"></div></div><div class="w-perf-val" id="wdgDiskVal">60%</div></div>
+  </div>
+</div>
+
+<!-- VIRTUAL DESKTOPS -->
+<div class="vdesk-overlay" id="vdeskOverlay">
+  <div class="vdesk-close-btn" onclick="closeVDesks()">✕</div>
+  <div class="vdesk-title">Sanal Masaüstleri</div>
+  <div class="vdesk-grid" id="vdeskGrid"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card" id="modalCard">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<div class="shutdown-overlay" id="shutdownOverlay">
+  <div class="shutdown-inner">
+    <div class="shutdown-spinner"></div>
+    <div class="shutdown-text" id="shutdownText">Windows kapatılıyor...</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CORE STATE
+// ============================================================
+let apps = [];
+let currentDesktop = 0;
+let desktops = [[]]; // desktop icon sets (future: per-desktop apps)
+let minimizedWindows = {};
+let maximizedWindows = {};
+let windowHistory = {};
+let activeWindow = null;
+let taskFreezeState = {};
+let taskmgrInterval = null;
+let perfHistory = { cpu: [], ram: [] };
+const DISK_TOTAL_GB = 256;
+let diskUsedGB = 128;
+let netConnected = true;
+let qsStates = { wifi:true, bt:false, dark:true, aeroplane:false, notif:true, focus:false };
+let brightness = 80;
+let systemVolume = 65;
+let notifications = [];
+
+// ============================================================
+// WALLPAPERS & THEMES
+// ============================================================
+const WALLPAPERS = [
+  { id:'default', title:'Cemile Mavi', url:"url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&q=80')", preview:"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&q=70" },
+  { id:'nature', title:'Doğa', url:"url('https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1600&q=80')", preview:"https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=300&q=70" },
+  { id:'arch', title:'Mimari', url:"url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600&q=80')", preview:"https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=300&q=70" },
+  { id:'space', title:'Uzay', url:"url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1600&q=80')", preview:"https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300&q=70" },
+  { id:'mountain', title:'Dağ', url:"url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600&q=80')", preview:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=300&q=70" },
+  { id:'city', title:'Şehir', url:"url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1600&q=80')", preview:"https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=300&q=70" },
+  { id:'abstract', title:'Soyut', url:"url('https://images.unsplash.com/photo-1558591710-4b4a1ae0f665?w=1600&q=80')", preview:"https://images.unsplash.com/photo-1558591710-4b4a1ae0f665?w=300&q=70" },
+  { id:'ocean', title:'Okyanus', url:"url('https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1600&q=80')", preview:"https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=300&q=70" },
+];
+let currentWallpaper = 'default';
+
+const THEMES = {
+  aero:   { bg:'radial-gradient(circle at 50% 30%,#1e6fae,#0a3a60 60%,#021726)', a1:'#3a9eff',a2:'#1050a0',a3:'#052050',glow:'rgba(0,150,255,.8)',border:'rgba(255,255,255,.35)',wb:'rgba(10,40,70,.6)',tb1:'rgba(30,60,90,.65)',tb2:'rgba(10,25,45,.8)',ov:'rgba(0,0,0,0)' },
+  night:  { bg:'radial-gradient(circle at 50% 30%,#2c3440,#14181f 60%,#050608)', a1:'#7a8a9a',a2:'#33404c',a3:'#0e1318',glow:'rgba(150,170,190,.6)',border:'rgba(255,255,255,.15)',wb:'rgba(15,18,24,.75)',tb1:'rgba(20,24,30,.8)',tb2:'rgba(5,6,9,.9)',ov:'rgba(0,5,15,.3)' },
+  pink:   { bg:'radial-gradient(circle at 50% 30%,#ff8fd0,#c23f8e 60%,#4a0e30)', a1:'#ff8fd0',a2:'#c23f8e',a3:'#4a0e30',glow:'rgba(255,120,200,.8)',border:'rgba(255,255,255,.4)',wb:'rgba(90,20,60,.55)',tb1:'rgba(150,40,100,.6)',tb2:'rgba(60,10,40,.8)',ov:'rgba(255,100,200,.05)' },
+  sunset: { bg:'radial-gradient(circle at 50% 30%,#ff9f43,#d63031 60%,#6c1010)', a1:'#ff9f43',a2:'#d63031',a3:'#6c1010',glow:'rgba(255,120,0,.8)',border:'rgba(255,200,100,.4)',wb:'rgba(80,20,10,.6)',tb1:'rgba(120,40,10,.65)',tb2:'rgba(50,10,5,.85)',ov:'rgba(255,80,0,.05)' },
+  forest: { bg:'radial-gradient(circle at 50% 30%,#55efc4,#00b894 60%,#00583d)', a1:'#00cec9',a2:'#00b894',a3:'#00583d',glow:'rgba(0,200,180,.8)',border:'rgba(255,255,255,.3)',wb:'rgba(0,50,40,.6)',tb1:'rgba(0,60,50,.65)',tb2:'rgba(0,25,20,.85)',ov:'rgba(0,150,120,.05)' },
+  purple: { bg:'radial-gradient(circle at 50% 30%,#a29bfe,#6c5ce7 60%,#2d1e8e)', a1:'#a29bfe',a2:'#6c5ce7',a3:'#2d1e8e',glow:'rgba(160,130,255,.8)',border:'rgba(255,255,255,.3)',wb:'rgba(30,15,80,.6)',tb1:'rgba(40,20,100,.65)',tb2:'rgba(15,8,50,.85)',ov:'rgba(100,60,200,.05)' },
+};
+let currentTheme = 'aero';
+
+const ACCENT_COLORS = ['#0078d4','#005ea2','#8764b8','#ef6950','#c44f1e','#00b294','#038387','#498205','#3a96dd','#bf0077','#e3008c','#ca5010'];
+let currentAccent = '#0078d4';
+
+function buildPersonalizeUI() {
+  // Wallpapers
+  const ws = document.getElementById('wallpaperSelector');
+  if(ws) {
+    ws.innerHTML = '';
+    WALLPAPERS.forEach(w=>{
+      const el = document.createElement('div');
+      el.className='wp-thumb'+(w.id===currentWallpaper?' selected':'');
+      el.innerHTML=`<img src="${w.preview}" loading="lazy"><div class="wp-title">${w.title}</div>`;
+      el.onclick=()=>{ changeWallpaper(w.id); document.querySelectorAll('.wp-thumb').forEach(x=>x.classList.remove('selected')); el.classList.add('selected'); };
+      ws.appendChild(el);
+    });
+  }
+  // Themes
+  const tg = document.getElementById('themeGrid');
+  if(tg) {
+    tg.innerHTML='';
+    const names = {aero:'Mavi Aero',night:'Gece',pink:'Pembe',sunset:'Gün Batımı',forest:'Orman',purple:'Mor'};
+    Object.keys(THEMES).forEach(k=>{
+      const el=document.createElement('div');
+      el.className='theme-swatch'+(k===currentTheme?' selected':'');
+      el.id='swatch-'+k;
+      el.innerHTML=`<div class="theme-swatch-circle ts-${k}" style="background:${THEMES[k].bg}"></div><div class="theme-swatch-label">${names[k]}</div>`;
+      el.onclick=()=>changeTheme(k);
+      tg.appendChild(el);
+    });
+  }
+  // Accent
+  const ac = document.getElementById('accentColors');
+  if(ac) {
+    ac.innerHTML='';
+    ACCENT_COLORS.forEach(c=>{
+      const el=document.createElement('div');
+      el.className='accent-dot'+(c===currentAccent?' selected':'');
+      el.style.background=c;
+      el.title=c;
+      el.onclick=()=>{ applyAccentColor(c); document.querySelectorAll('.accent-dot').forEach(x=>x.classList.remove('selected')); el.classList.add('selected'); };
+      ac.appendChild(el);
+    });
+  }
+}
+
+function changeWallpaper(id) {
+  currentWallpaper=id;
+  const w=WALLPAPERS.find(x=>x.id===id);
+  if(w) document.body.style.backgroundImage=w.url;
+}
+function changeTheme(name) {
+  currentTheme=name;
+  const t=THEMES[name]||THEMES.aero;
+  const r=document.documentElement.style;
+  r.setProperty('--accent',t.a1); r.setProperty('--accent2',t.a2); r.setProperty('--accent3',t.a3);
+  r.setProperty('--glow',t.glow); r.setProperty('--border',t.border);
+  r.setProperty('--win-bg',t.wb); r.setProperty('--tb1',t.tb1); r.setProperty('--tb2',t.tb2); r.setProperty('--overlay',t.ov);
+  document.querySelectorAll('.theme-swatch').forEach(s=>s.classList.remove('selected'));
+  const sw=document.getElementById('swatch-'+name);
+  if(sw) sw.classList.add('selected');
+  playSound('click');
+}
+function applyAccentColor(c) {
+  currentAccent=c;
+  document.documentElement.style.setProperty('--accent',c);
+  // darken for accent2/3
+  playSound('click');
+}
+function switchPzTab(tab) {
+  document.querySelectorAll('.pz-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.pz-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pzTab-'+tab).classList.add('active');
+  document.getElementById('pzPanel-'+tab).classList.add('active');
+}
+
+// ============================================================
+// DESKTOP
+// ============================================================
+function renderDesktop() {
+  const c=document.getElementById('desktopArea');
+  c.innerHTML='';
+  if(!apps.length) {
+    c.innerHTML='<div class="desktop-hint">🖥️ Masaüstü boş<br>App Store\'dan uygulama yükleyin 🏪</div>';
+  }
+  apps.forEach((app,i)=>{
+    const d=document.createElement('div');
+    d.className='desktop-item icon-pop'; d.id=`icon-${app.id}`;
+    d.style.cssText=`left:${app.x}px;top:${app.y}px;animation-delay:${i*.05}s`;
+    d.innerHTML=`<div class="icon">${app.icon}</div><div class="label">${app.name}</div>`;
+    d.ondblclick=()=>openWin(app.target);
+    d.oncontextmenu=e=>openIconContext(e,app.id);
+    // drag
+    d.onmousedown=function(e){
+      if(e.button!==0)return; e.stopPropagation();
+      const sx=e.clientX-d.getBoundingClientRect().left, sy=e.clientY-d.getBoundingClientRect().top;
+      let moved=false;
+      const move=ev=>{ moved=true; let nx=ev.clientX-sx, ny=ev.clientY-sy; nx=Math.max(0,Math.min(nx,innerWidth-90)); ny=Math.max(0,Math.min(ny,innerHeight-48-96)); d.style.left=nx+'px'; d.style.top=ny+'px'; app.x=nx; app.y=ny; };
+      const up=()=>{ document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); };
+      document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+    };
+    c.appendChild(d);
+  });
+  renderStartMenuApps();
+  updateTaskbarApps();
+}
+
+// ============================================================
+// APP STORE
+// ============================================================
+const storeApps = [
+  { id:'paint',     name:'MS Paint',       icon:'🎨', cat:'uygulama', desc:'Gelişmiş çizim aracı — kalem, fırça, şekiller.', target:'win-paint',     size:45,  stars:4.2, isGame:false },
+  { id:'mines',     name:'Mayın Tarlası',  icon:'💣', cat:'oyun',     desc:'Klasik mantık oyunu. Bayraklama desteği!',       target:'win-mines',     size:12,  stars:4.7, isGame:true  },
+  { id:'notepad',   name:'Not Defteri',    icon:'📝', cat:'uygulama', desc:'Font değiştirme, karakter sayısı ve kaydetme.', target:'win-notepad',   size:5,   stars:4.0, isGame:false },
+  { id:'explorer',  name:'Dosya Gezgini',  icon:'📁', cat:'uygulama', desc:'Dosyalarınızı görüntüleyin ve yönetin.',        target:'win-explorer',  size:20,  stars:4.1, isGame:false },
+  { id:'calc',      name:'Hesap Makinesi', icon:'🧮', cat:'uygulama', desc:'Geçmiş, √ ve ±. Tam Windows 11 deneyimi.',     target:'win-calc',      size:8,   stars:4.5, isGame:false },
+  { id:'rps',       name:'Taş Kağıt Makas',icon:'✊', cat:'oyun',     desc:'Seri sayacı, geçmiş görüntüsü ile TKM.',       target:'win-rps',       size:15,  stars:4.3, isGame:true  },
+  { id:'music',     name:'Müzik Çalar',    icon:'🎵', cat:'uygulama', desc:'Shuffle, tekrar, ses seviyesi kontrolü.',       target:'win-music',     size:60,  stars:4.8, isGame:false },
+  { id:'solitaire', name:'Solitaire',      icon:'🃏', cat:'oyun',     desc:'Klasik kart oyunu. Gerçek oyun motoru!',        target:'win-solitaire', size:30,  stars:4.9, isGame:true  },
+  { id:'weather',   name:'Hava Durumu',    icon:'⛅', cat:'uygulama', desc:'Simüle hava, 5 günlük tahmin ve detaylar.',     target:'win-weather',   size:18,  stars:4.6, isGame:false },
+  { id:'clock',     name:'Saat & Alarm',   icon:'🕐', cat:'uygulama', desc:'Analog saat, dijital saat ve alarm kurma.',     target:'win-clock',     size:10,  stars:4.4, isGame:false },
+  { id:'taskmgr',   name:'Görev Yöneticisi',icon:'⚙️',cat:'uygulama', desc:'CPU/RAM performans grafikleri ile tam Görev Yöneticisi.',target:'win-taskmgr',size:5,  stars:4.3, isGame:false },
+];
+let downloadState={}, storeCurrentTab='all';
+
+function renderStore() {
+  const grid=document.getElementById('storeGrid'); if(!grid) return;
+  const q=(document.getElementById('storeSearch')||{value:''}).value.toLowerCase();
+  grid.innerHTML='';
+  storeApps.filter(it=>{
+    const tabOk = storeCurrentTab==='all' || it.cat===storeCurrentTab;
+    const qOk = !q || it.name.toLowerCase().includes(q) || it.desc.toLowerCase().includes(q);
+    return tabOk && qOk;
+  }).forEach((item,idx)=>{
+    const installed=apps.some(a=>a.id===item.id);
+    const dl=downloadState[item.id];
+    const stars='★'.repeat(Math.floor(item.stars))+'☆'.repeat(5-Math.floor(item.stars));
+    const card=document.createElement('div');
+    card.className='store-card'; card.style.animationDelay=idx*.04+'s';
+    let actionHtml='';
+    if(installed) actionHtml=`<button class="store-btn store-btn-installed" disabled>Yüklü ✓</button><button class="store-btn store-btn-uninstall" onclick="uninstallApp('${item.id}')">Kaldır 🗑️</button>`;
+    else if(dl&&dl.downloading) actionHtml=`<div class="store-progress-wrap"><div class="store-progress-bar" id="spb-${item.id}" style="width:${dl.progress}%"></div></div><div class="store-progress-text" id="spt-${item.id}">%${Math.round(dl.progress)} İndiriliyor...</div>`;
+    else actionHtml=`<button class="store-btn" onclick="startDownload('${item.id}')">İndir ⬇️</button>`;
+    card.innerHTML=`<div class="store-card-top"><div class="store-card-icon">${item.icon}</div><div class="store-card-tag">${item.cat==='oyun'?'Oyun':'Uygulama'}</div></div><div class="store-card-name">${item.name}</div><div class="store-card-desc">${item.desc}</div><div class="store-card-stars">${stars} (${item.stars})</div><div style="font-size:10px;color:#aaa;">${item.size} MB</div><div class="store-card-action" id="store-action-${item.id}">${actionHtml}</div>`;
+    grid.appendChild(card);
+  });
+}
+function filterStore(){ renderStore(); }
+function filterStoreTab(tab) {
+  storeCurrentTab=tab;
+  document.querySelectorAll('.store-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('stab-'+tab).classList.add('active');
+  renderStore();
+}
+function startDownload(id) {
+  const item=storeApps.find(s=>s.id===id);
+  if(!item||apps.some(a=>a.id===id)) return;
+  const diskPct=Math.round((diskUsedGB/DISK_TOTAL_GB)*100);
+  if(diskPct>=95){ showToast('Yetersiz disk alanı!','error'); return; }
+  downloadState[id]={downloading:true,progress:0};
+  renderStore(); playSound('click');
+  const timer=setInterval(()=>{
+    const st=downloadState[id]; if(!st){clearInterval(timer);return;}
+    st.progress+=Math.random()*16+6;
+    if(st.progress>=100){ st.progress=100; clearInterval(timer);
+      const bar=document.getElementById('spb-'+id); if(bar) bar.style.width='100%';
+      setTimeout(()=>finishInstall(item),300);
+    } else {
+      const bar=document.getElementById('spb-'+id); const txt=document.getElementById('spt-'+id);
+      if(bar) bar.style.width=st.progress+'%';
+      if(txt) txt.textContent=`%${Math.round(st.progress)} İndiriliyor...`;
+    }
+  },250);
+}
+function finishInstall(item) {
+  delete downloadState[item.id];
+  installApp(item.name,item.icon,item.target,{isGame:item.isGame,sizeMB:item.size});
+  renderStore();
+}
+function installApp(name,icon,targetId,opts) {
+  opts=opts||{};
+  const id=targetId.split('-').slice(1).join('-');
+  if(apps.find(a=>a.id===id)){ showToast(`${name} zaten yüklü!`,'error'); return; }
+  const count=apps.length;
+  const newX=20+(Math.floor(count/7)*96);
+  const newY=20+((count%7)*106);
+  apps.push({id,name,icon,target:targetId,x:newX,y:newY,isGame:!!opts.isGame,sizeMB:opts.sizeMB||(Math.floor(Math.random()*80)+15)});
+  renderDesktop();
+  diskUsedGB=Math.min(DISK_TOTAL_GB,diskUsedGB+(opts.sizeMB?opts.sizeMB/100:1.5));
+  updateDiskGadget(); playSound('success');
+  showToast(`${name} yüklendi! ✨`,'success',icon);
+  addNotification(icon,`${name} yüklendi`,`App Store\'dan indirme tamamlandı.`);
+}
+function uninstallApp(appId) {
+  const app=apps.find(a=>a.id===appId);
+  if(!app) return;
+  showConfirmModal('Kaldır','<div style="text-align:center;padding:8px 0"><div style="font-size:40px">'+app.icon+'</div><p style="margin-top:10px"><b>'+app.name+'</b> kaldırılacak.</p></div>','Kaldır',()=>{
+    closeWin(app.target);
+    const el=document.getElementById(`icon-${app.id}`);
+    const fin=()=>{ apps=apps.filter(a=>a.id!==appId); delete taskFreezeState[appId]; diskUsedGB=Math.max(20,diskUsedGB-(app.sizeMB||1.5)/100); updateDiskGadget(); renderDesktop(); renderStore(); showToast(`${app.name} kaldırıldı`,'info','🗑️'); };
+    if(el){ el.style.animation='iconRemove .3s ease forwards'; setTimeout(fin,280); } else fin();
+  });
+}
+
+// ============================================================
+// WINDOW MANAGEMENT
+// ============================================================
+function openWin(id) {
+  const win=document.getElementById(id); if(!win) return;
+  const wasClosed=win.style.display!=='flex';
+  win.style.display='flex';
+  win.classList.remove('minimized');
+  if(minimizedWindows[id]) delete minimizedWindows[id];
+  if(!win.style.left||win.style.left==='') {
+    const cx=Math.max(10,(innerWidth-parseInt(win.style.width||'400'))/2);
+    const cy=Math.max(10,(innerHeight-48-parseInt(win.style.height||'350'))/2);
+    win.style.left=cx+'px'; win.style.top=cy+'px';
+  }
+  win.classList.add('win-opening');
+  setTimeout(()=>win.classList.remove('win-opening'),220);
+  focusWin(win);
+  updateTaskbarApps();
+  if(id==='win-explorer'){ buildExplorerNav(); renderExplorer(currentExplorerFolder); }
+  if(id==='win-taskmgr') startTaskManagerLoop();
+  if(id==='win-weather') renderWeather();
+  if(id==='win-personalize') buildPersonalizeUI();
+  if(id==='win-solitaire'&&wasClosed) initSolitaire();
+  if(id==='win-clock') startClock();
+  if(wasClosed&&apps.find(a=>a.target===id)?.isGame) playSound('success');
+}
+function closeWin(id) {
+  const win=document.getElementById(id); if(!win) return;
+  win.style.animation='winClose .2s forwards';
+  setTimeout(()=>{ win.style.display='none'; win.style.animation=''; delete minimizedWindows[id]; delete maximizedWindows[id]; updateTaskbarApps(); },180);
+}
+function minimizeWin(id) {
+  const win=document.getElementById(id); if(!win) return;
+  win.classList.add('minimized');
+  minimizedWindows[id]=true;
+  updateTaskbarApps();
+  playSound('click');
+}
+function maximizeWin(id) {
+  const win=document.getElementById(id); if(!win) return;
+  if(maximizedWindows[id]) {
+    win.classList.remove('maximized');
+    if(windowHistory[id]) { win.style.left=windowHistory[id].l; win.style.top=windowHistory[id].t; win.style.width=windowHistory[id].w; win.style.height=windowHistory[id].h; }
+    delete maximizedWindows[id];
+  } else {
+    windowHistory[id]={l:win.style.left,t:win.style.top,w:win.style.width,h:win.style.height};
+    win.classList.add('maximized');
+    maximizedWindows[id]=true;
+  }
+  playSound('click');
+}
+function focusWin(win) {
+  document.querySelectorAll('.window').forEach(w=>{ w.style.zIndex=100; w.classList.remove('focused'); });
+  win.style.zIndex=200; win.classList.add('focused'); activeWindow=win;
+}
+function dragWindow(e,id) {
+  const win=document.getElementById(id); if(!win||maximizedWindows[id]) return;
+  focusWin(win);
+  const sx=e.clientX-win.getBoundingClientRect().left, sy=e.clientY-win.getBoundingClientRect().top;
+  const move=ev=>{
+    let nl=ev.clientX-sx, nt=ev.clientY-sy;
+    nl=Math.max(0,Math.min(nl,innerWidth-win.offsetWidth));
+    nt=Math.max(0,Math.min(nt,innerHeight-48-win.offsetHeight));
+    win.style.left=nl+'px'; win.style.top=nt+'px';
+  };
+  const up=()=>{ document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); };
+  document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+}
+function updateTaskbarApps() {
+  const c=document.getElementById('taskbarApps'); if(!c) return;
+  c.innerHTML='';
+  const sep=document.getElementById('tbSep2');
+  const openApps=apps.filter(a=>{ const w=document.getElementById(a.target); return w&&w.style.display==='flex'; });
+  if(openApps.length>0&&sep) sep.style.display='block'; else if(sep) sep.style.display='none';
+  openApps.forEach(app=>{
+    const win=document.getElementById(app.target);
+    const btn=document.createElement('div');
+    btn.className='tb-app-btn'+(win&&!minimizedWindows[app.target]?' active':' minimized-state');
+    btn.innerHTML=`<span class="tb-icon">${app.icon}</span>`;
+    btn.title=app.name;
+    btn.onclick=()=>{
+      if(minimizedWindows[app.target]){ win.classList.remove('minimized'); delete minimizedWindows[app.target]; focusWin(win); updateTaskbarApps(); }
+      else { focusWin(win); }
+    };
+    c.appendChild(btn);
+  });
+}
+
+// ============================================================
+// START MENU
+// ============================================================
+// ============================================================
+// WIN7 MODU — Başlat ikonu sol köşeye animasyonlu geçiş
+// ============================================================
+let win7Mode = false;
+
+function toggleWin7Mode() {
+  closeAllContextMenus();
+  win7Mode = !win7Mode;
+
+  const center = document.getElementById('taskbarCenter');
+  const menu   = document.getElementById('startMenu');
+  const btnTxt = document.getElementById('win7ModeBtnText');
+
+  // Menü açıksa önce kapat
+  const wasOpen = menu.classList.contains('show');
+  if(wasOpen) menu.classList.remove('show');
+
+  if (win7Mode) {
+    center.classList.add('win7-mode');
+    // Animasyon geçişi için kısa gecikme
+    setTimeout(()=>{
+      menu.classList.add('win7-pos');
+      if(wasOpen) setTimeout(()=>menu.classList.add('show'), 50);
+    }, 50);
+    if (btnTxt) btnTxt.textContent = 'Windows 11 Moduna Dön ✓';
+    showToast('Windows 7 modu aktif — ikon sol köşede 🪟', 'info', '🪟');
+  } else {
+    center.classList.remove('win7-mode');
+    setTimeout(()=>{
+      menu.classList.remove('win7-pos');
+      if(wasOpen) setTimeout(()=>menu.classList.add('show'), 50);
+    }, 50);
+    if (btnTxt) btnTxt.textContent = 'Windows 7 Modu';
+    showToast('Windows 11 modu aktif — ikon ortada 🪟', 'info', '🪟');
+  }
+  playSound('click');
+}
+
+function toggleStartMenu(e) {
+  if(e) e.stopPropagation();
+  closeActionCenter();
+  const m=document.getElementById('startMenu');
+  if(m.classList.contains('show')) {
+    m.classList.remove('show');
+    closeAllPrograms();
+    document.getElementById('smSearchResults').classList.remove('show');
+    document.getElementById('smSearchInput').value='';
+  } else {
+    m.style.display='flex';
+    // win7 pos class'ı zaten set edilmiş olabilir, sadece show ekle
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      m.classList.add('show');
+    }));
+    renderStartMenuApps();
+  }
+}
+function closeStartAndContext() {
+  document.getElementById('startMenu').classList.remove('show');
+  closeAllContextMenus();
+  closeActionCenter();
+  closeWidgets();
+}
+// ============================================================
+// WIN7 START MENU
+// ============================================================
+let smAllProgramsOpen = false;
+
+function renderStartMenuApps(){
+  const list = document.getElementById('smList'); if(!list) return;
+  list.innerHTML = '';
+
+  // Sabit üst kısım
+  const pinned = [
+    {icon:'🏪', name:'App Store',         fn:()=>{openWin('win-store');toggleStartMenu();}},
+    {icon:'📁', name:'Dosya Gezgini',     fn:()=>{openWin('win-explorer');toggleStartMenu();}},
+    {icon:'📝', name:'Not Defteri',       fn:()=>{openWin('win-notepad');toggleStartMenu();}},
+    {icon:'🧮', name:'Hesap Makinesi',    fn:()=>{openWin('win-calc');toggleStartMenu();}},
+    {icon:'⛅', name:'Hava Durumu',       fn:()=>{openWin('win-weather');toggleStartMenu();}},
+    {icon:'🕐', name:'Saat & Alarm',      fn:()=>{openWin('win-clock');toggleStartMenu();}},
+  ];
+  pinned.forEach(p=>{
+    const el=document.createElement('div'); el.className='sm-item';
+    el.innerHTML=`<span class="si-icon">${p.icon}</span><span class="si-name">${p.name}</span>`;
+    el.onclick=p.fn; list.appendChild(el);
+  });
+
+  // Divider + yüklü uygulamalar
+  if(apps.length){
+    const div=document.createElement('div'); div.className='sm-divider'; list.appendChild(div);
+    const lbl=document.createElement('div');
+    lbl.style.cssText='font-size:10px;color:rgba(255,255,255,.35);padding:3px 10px;text-transform:uppercase;letter-spacing:.5px;';
+    lbl.textContent='Son Kullanılanlar'; list.appendChild(lbl);
+    apps.slice(-5).reverse().forEach(app=>{
+      const el=document.createElement('div'); el.className='sm-item';
+      el.innerHTML=`<span class="si-icon">${app.icon}</span><span class="si-name">${app.name}</span>`;
+      el.onclick=()=>{openWin(app.target);toggleStartMenu();}; list.appendChild(el);
+    });
+  }
+
+  // Tüm Programlar listesini de oluştur
+  renderAllProgramsList();
+}
+
+function renderAllProgramsList(){
+  const apList=document.getElementById('smApList'); if(!apList) return;
+  apList.innerHTML='';
+  const all=[
+    {icon:'🎨',name:'MS Paint',           fn:()=>{openWin('win-paint');toggleStartMenu();}},
+    {icon:'💣',name:'Mayın Tarlası',      fn:()=>{openWin('win-mines');toggleStartMenu();}},
+    {icon:'📝',name:'Not Defteri',        fn:()=>{openWin('win-notepad');toggleStartMenu();}},
+    {icon:'📁',name:'Dosya Gezgini',      fn:()=>{openWin('win-explorer');toggleStartMenu();}},
+    {icon:'🧮',name:'Hesap Makinesi',     fn:()=>{openWin('win-calc');toggleStartMenu();}},
+    {icon:'✊',name:'Taş Kağıt Makas',   fn:()=>{openWin('win-rps');toggleStartMenu();}},
+    {icon:'🎵',name:'Müzik Çalar',        fn:()=>{openWin('win-music');toggleStartMenu();}},
+    {icon:'🃏',name:'Solitaire',          fn:()=>{openWin('win-solitaire');toggleStartMenu();}},
+    {icon:'⛅',name:'Hava Durumu',        fn:()=>{openWin('win-weather');toggleStartMenu();}},
+    {icon:'🕐',name:'Saat & Alarm',       fn:()=>{openWin('win-clock');toggleStartMenu();}},
+    {icon:'⚙️',name:'Görev Yöneticisi',   fn:()=>{openTaskManager();toggleStartMenu();}},
+    {icon:'🏪',name:'App Store',          fn:()=>{openWin('win-store');toggleStartMenu();}},
+    {icon:'🎨',name:'Kişiselleştir',      fn:()=>{openWin('win-personalize');toggleStartMenu();}},
+  ];
+  all.forEach(a=>{
+    const el=document.createElement('div'); el.className='sm-ap-item';
+    el.innerHTML=`<span class="ap-icon">${a.icon}</span>${a.name}`;
+    el.onclick=a.fn; apList.appendChild(el);
+  });
+}
+
+function openAllPrograms(){
+  smAllProgramsOpen=true;
+  document.getElementById('smAllPrograms').classList.add('open');
+  playSound('click');
+}
+function closeAllPrograms(){
+  smAllProgramsOpen=false;
+  document.getElementById('smAllPrograms').classList.remove('open');
+  playSound('click');
+}
+
+function smSearch(){
+  const q=document.getElementById('smSearchInput').value.toLowerCase().trim();
+  const sr=document.getElementById('smSearchResults');
+  if(!q){ sr.classList.remove('show'); return; }
+
+  const all=[
+    ...storeApps.map(a=>({icon:a.icon,name:a.name,fn:()=>{openWin(a.target);toggleStartMenu();}})),
+    {icon:'⚙️',name:'Görev Yöneticisi',fn:()=>{openTaskManager();toggleStartMenu();}},
+    {icon:'🎨',name:'Kişiselleştir',fn:()=>{openWin('win-personalize');toggleStartMenu();}},
+  ];
+  const results=all.filter(a=>a.name.toLowerCase().includes(q)).slice(0,7);
+  if(!results.length){ sr.classList.remove('show'); return; }
+  sr.innerHTML=results.map((r,i)=>`<div class="sm-sr-item" onclick="(${r.fn.toString()})()"><span class="sm-sr-icon">${r.icon}</span>${r.name}</div>`).join('');
+  // onclick olarak doğrudan fn çalıştır
+  sr.innerHTML=''; results.forEach(r=>{
+    const el=document.createElement('div'); el.className='sm-sr-item';
+    el.innerHTML=`<span class="sm-sr-icon">${r.icon}</span>${r.name}`;
+    el.onclick=r.fn; sr.appendChild(el);
+  });
+  sr.classList.add('show');
+}
+
+// ============================================================
+// ACTION CENTER
+// ============================================================
+function toggleActionCenter() {
+  document.getElementById('startMenu').classList.remove('show');
+  closeWidgets();
+  const ac=document.getElementById('actionCenter');
+  if(ac.classList.contains('show')) ac.classList.remove('show');
+  else { updateACDate(); renderNotifications(); ac.classList.add('show'); }
+}
+function closeActionCenter() { document.getElementById('actionCenter').classList.remove('show'); }
+function toggleQS(key) {
+  qsStates[key]=!qsStates[key];
+  const tile=document.getElementById('qs-'+key);
+  if(tile) tile.classList.toggle('on',qsStates[key]);
+  const stateEl=document.getElementById('qs-'+key+'-state');
+  const stateMap={wifi:['Ev Ağı','Kapalı'],bt:['Açık','Kapalı'],dark:['Açık','Kapalı'],aeroplane:['Açık','Kapalı'],notif:['Açık','Kapalı'],focus:['Açık','Kapalı']};
+  if(stateEl) stateEl.textContent=qsStates[key]?stateMap[key][0]:stateMap[key][1];
+  playSound('click');
+  showToast(`${key==='wifi'?'Wi-Fi':key==='bt'?'Bluetooth':key==='dark'?'Karanlık Mod':key==='aeroplane'?'Uçak Modu':key==='notif'?'Bildirimler':'Odak Modu'} ${qsStates[key]?'açıldı':'kapatıldı'}`,'info');
+}
+function setBrightness(v){ brightness=+v; document.getElementById('brightnessVal').textContent=v+'%'; document.body.style.filter=`brightness(${v/100})`; }
+function setVolume(v){ systemVolume=+v; document.getElementById('volumeVal').textContent=v+'%'; }
+function updateACDate() {
+  const now=new Date();
+  const el=document.getElementById('acDateFull');
+  if(el) el.textContent=now.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
+}
+function addNotification(icon,title,body) {
+  notifications.unshift({icon,title,body,time:new Date()});
+  if(notifications.length>5) notifications.pop();
+}
+function renderNotifications() {
+  const nl=document.getElementById('acNotifList'); if(!nl) return;
+  if(!notifications.length){ nl.innerHTML='<div style="color:rgba(255,255,255,.4);font-size:12px;padding:10px;text-align:center;">Bildirim yok</div>'; return; }
+  nl.innerHTML='<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.55);margin-bottom:8px;">Bildirimler</div>'+notifications.map(n=>`<div class="ac-notif" style="margin-bottom:6px;"><div class="ac-notif-icon">${n.icon}</div><div><div class="ac-notif-title">${n.title}</div><div class="ac-notif-body">${n.body}</div></div></div>`).join('');
+}
+
+// ============================================================
+// WIDGETS
+// ============================================================
+function toggleWidgets() {
+  const wp=document.getElementById('widgetsPanel');
+  if(wp.classList.contains('show')) { closeWidgets(); }
+  else { closeStartAndContext(); wp.classList.add('show'); renderCalendar(); renderWidgetNews(); }
+}
+function closeWidgets() { document.getElementById('widgetsPanel').classList.remove('show'); }
+
+// Weather simulation
+const weatherData = {icon:'⛅',temp:18,desc:'Parçalı bulutlu',hissedilen:16,nem:62,ruzgar:'15 km/s',basinc:'1013 hPa',uv:'3 Orta',forecast:[{name:'Pzt',icon:'☀️',hi:22,lo:14},{name:'Sal',icon:'🌤️',hi:19,lo:13},{name:'Çar',icon:'🌧️',hi:15,lo:10},{name:'Per',icon:'⛅',hi:17,lo:11},{name:'Cum',icon:'☀️',hi:24,lo:16}]};
+
+function renderWeather() {
+  const body=document.getElementById('weatherBody'); if(!body) return;
+  const d=weatherData;
+  body.innerHTML=`<div class="weather-main-row"><div class="weather-big-icon">${d.icon}</div><div><div class="weather-city">📍 Frankfurt, Almanya</div><div style="font-size:48px;font-weight:200;color:#fff;">${d.temp}°C</div><div class="weather-desc">${d.desc}</div></div></div><div class="weather-details"><div class="weather-detail-item"><div class="wd-label">Hissedilen</div><div class="wd-val">${d.hissedilen}°C</div></div><div class="weather-detail-item"><div class="wd-label">Nem</div><div class="wd-val">%${d.nem}</div></div><div class="weather-detail-item"><div class="wd-label">Rüzgar</div><div class="wd-val">${d.ruzgar}</div></div><div class="weather-detail-item"><div class="wd-label">Basınç</div><div class="wd-val">${d.basinc}</div></div><div class="weather-detail-item"><div class="wd-label">UV Endeksi</div><div class="wd-val">${d.uv}</div></div><div class="weather-detail-item"><div class="wd-label">Görüş</div><div class="wd-val">10 km</div></div></div><div style="color:rgba(255,255,255,.6);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:8px;">5 Günlük Tahmin</div><div class="weather-forecast">${d.forecast.map(f=>`<div class="wf-day"><div class="wf-name">${f.name}</div><div class="wf-icon">${f.icon}</div><div class="wf-temp">${f.hi}°</div><div class="wf-lo">${f.lo}°</div></div>`).join('')}</div>`;
+}
+
+// Widget weather
+function updateWidgetWeather() {
+  const d=weatherData;
+  const icon=document.getElementById('wdgWeatherIcon'); const temp=document.getElementById('wdgWeatherTemp'); const info=document.getElementById('wdgWeatherInfo');
+  if(icon) icon.textContent=d.icon; if(temp) temp.textContent=d.temp+'°C';
+  if(info) info.innerHTML=`${d.desc}<br>Hissedilen: ${d.hissedilen}°C<br>Nem: %${d.nem}`;
+  const fc=document.getElementById('wdgForecast');
+  if(fc) fc.innerHTML=d.forecast.map(f=>`<div class="w-day"><div class="w-day-name">${f.name}</div><div class="w-day-icon">${f.icon}</div><div class="w-day-temp">${f.hi}°</div></div>`).join('');
+  const gi=document.getElementById('gadWeatherIcon'); const gt=document.getElementById('gadWeatherTemp');
+  if(gi) gi.textContent=d.icon; if(gt) gt.textContent=d.temp+'°C';
+}
+
+// Calendar widget
+let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+function renderCalendar() {
+  const g=document.getElementById('wdgCalGrid'); if(!g) return;
+  const now=new Date(); const today=now.getDate();
+  const title=document.getElementById('wdgCalTitle');
+  const months=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  if(title) title.textContent=`${months[calMonth]} ${calYear}`;
+  const days=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  let html=days.map(d=>`<div class="w-cal-day header">${d}</div>`).join('');
+  const first=new Date(calYear,calMonth,1).getDay();
+  const offset=(first===0?6:first-1);
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const prevDays=new Date(calYear,calMonth,0).getDate();
+  for(let i=0;i<offset;i++) html+=`<div class="w-cal-day other">${prevDays-offset+1+i}</div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const isToday=d===today&&calMonth===now.getMonth()&&calYear===now.getFullYear();
+    html+=`<div class="w-cal-day${isToday?' today':''}">${d}</div>`;
+  }
+  g.innerHTML=html;
+}
+function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+function renderWidgetNews() {
+  const nl=document.getElementById('wdgNews'); if(!nl) return;
+  const news=[{title:'Cemile OS v18 çıktı! Yeni özellikler sizi bekliyor.',src:'CemileTech'},{title:'Windows 11 benzeri arayüz artık tarayıcıda.',src:'TechRadar'},{title:'App Store güncellendi — 3 yeni uygulama eklendi.',src:'CemileNews'},{title:'Yapay zeka destekli Görev Yöneticisi geliyor.',src:'CemilebilişimHaber'},{title:'Solitaire oyunu tam motor ile güncellendi.',src:'OyunDünyası'}];
+  nl.innerHTML=news.map(n=>`<div class="w-news-item"><div class="w-news-title">${n.title}</div><div class="w-news-src">${n.src}</div></div>`).join('');
+}
+
+// ============================================================
+// VIRTUAL DESKTOPS
+// ============================================================
+let vdeskCount=1;
+function openVDesks() {
+  const overlay=document.getElementById('vdeskOverlay');
+  const grid=document.getElementById('vdeskGrid');
+  grid.innerHTML='';
+  for(let i=0;i<vdeskCount;i++){
+    const thumb=document.createElement('div');
+    thumb.className='vdesk-thumb'+(i===currentDesktop?' active':'');
+    thumb.innerHTML=`<div style="padding:8px;font-size:28px;text-align:center;margin-top:20px;">${i===0?'🖥️':'🖼️'}</div><div class="vdesk-label">Masaüstü ${i+1}</div>`;
+    if(i!==currentDesktop) thumb.onclick=()=>{ currentDesktop=i; closeVDesks(); showToast(`Masaüstü ${i+1}'e geçildi`,'info'); };
+    grid.appendChild(thumb);
+  }
+  if(vdeskCount<4){
+    const add=document.createElement('div'); add.className='vdesk-add';
+    add.innerHTML='<div style="font-size:28px;">+</div><div>Yeni Masaüstü</div>';
+    add.onclick=()=>{ vdeskCount++; openVDesks(); playSound('success'); };
+    grid.appendChild(add);
+  }
+  overlay.classList.add('show');
+}
+function closeVDesks(){ document.getElementById('vdeskOverlay').classList.remove('show'); }
+
+// ============================================================
+// CONTEXT MENUS
+// ============================================================
+let activeIconAppId=null;
+function openDesktopContext(e) {
+  e.preventDefault(); closeAllContextMenus();
+  const m=document.getElementById('desktopContext');
+  let x=e.clientX, y=e.clientY;
+  if(x+200>innerWidth) x=innerWidth-200;
+  if(y+200>innerHeight-48) y=e.clientY-200;
+  m.style.display='flex'; m.style.left=x+'px'; m.style.top=y+'px';
+}
+function openIconContext(e,appId) {
+  e.preventDefault(); e.stopPropagation(); closeAllContextMenus();
+  activeIconAppId=appId;
+  const m=document.getElementById('iconContext');
+  let x=e.clientX, y=e.clientY;
+  if(x+200>innerWidth) x=innerWidth-200;
+  if(y+160>innerHeight-48) y=e.clientY-160;
+  requestAnimationFrame(()=>{ m.style.display='flex'; m.style.left=x+'px'; m.style.top=y+'px'; });
+}
+function openTaskbarContext(e) {
+  e.preventDefault(); e.stopPropagation(); closeAllContextMenus();
+  const m=document.getElementById('taskbarContext');
+  m.style.display='flex'; m.style.left=e.clientX+'px'; m.style.top=(e.clientY-90)+'px';
+}
+function closeAllContextMenus() {
+  ['desktopContext','taskbarContext','iconContext'].forEach(id=>{ const m=document.getElementById(id); if(m) m.style.display='none'; });
+}
+function iconContextOpen(){ const a=apps.find(x=>x.id===activeIconAppId); closeAllContextMenus(); if(a)openWin(a.target); }
+function iconContextDelete(){
+  const a=apps.find(x=>x.id===activeIconAppId); closeAllContextMenus(); if(!a) return;
+  showConfirmModal('Kaldır',`<div style="text-align:center;padding:8px"><div style="font-size:36px">${a.icon}</div><p style="margin-top:8px"><b>${a.name}</b> kaldırılsın mı?</p></div>`,'Kaldır',()=>uninstallApp(a.id));
+}
+function iconContextProperties(){
+  const a=apps.find(x=>x.id===activeIconAppId); closeAllContextMenus(); if(!a) return;
+  showInfoModal(`${a.icon} ${a.name}`,`<table class="modal-props-table"><tr><td>Tür</td><td>${a.isGame?'Oyun':'Uygulama'}</td></tr><tr><td>Boyut</td><td>${a.sizeMB} MB</td></tr><tr><td>Durum</td><td style="color:#2a8a3e">✅ Yüklü</td></tr><tr><td>Konum</td><td style="font-family:monospace;font-size:11px">C:\\Cemile\\Apps\\${a.id}</td></tr><tr><td>Masaüstü</td><td>${currentDesktop+1}. Masaüstü</td></tr></table>`);
+}
+function refreshDesktop(){ closeAllContextMenus(); renderDesktop(); updateDiskGadget(); updateNetGadget(); showToast('Masaüstü yenilendi','info','🔄'); }
+function triggerAeroPeek(){ document.querySelectorAll('.window').forEach(w=>{ if(w.style.display==='flex'){minimizeWin(w.id);} }); updateTaskbarApps(); closeAllContextMenus(); }
+
+// ============================================================
+// MODAL
+// ============================================================
+let modalCb=null;
+function openModal(){ const o=document.getElementById('modalOverlay'); o.style.display='flex'; requestAnimationFrame(()=>o.classList.add('show')); }
+function closeModal(){ const o=document.getElementById('modalOverlay'); o.classList.remove('show'); setTimeout(()=>{o.style.display='none';},220); modalCb=null; }
+function confirmModalAction(){ const cb=modalCb; closeModal(); if(cb) cb(); }
+function showInfoModal(title,body){ document.getElementById('modalTitle').textContent=title; document.getElementById('modalBody').innerHTML=body; document.getElementById('modalFooter').innerHTML=`<button class="modal-btn modal-btn-primary" onclick="closeModal()">Tamam</button>`; openModal(); }
+function showConfirmModal(title,body,label,cb){ document.getElementById('modalTitle').textContent=title; document.getElementById('modalBody').innerHTML=body; modalCb=cb; document.getElementById('modalFooter').innerHTML=`<button class="modal-btn" onclick="closeModal()">Vazgeç</button><button class="modal-btn modal-btn-danger" onclick="confirmModalAction()">${label}</button>`; openModal(); }
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg,type,icon) {
+  const c=document.getElementById('toastContainer'); if(!c) return;
+  const icons={success:'✅',error:'⚠️',info:'ℹ️'};
+  const el=document.createElement('div'); el.className='toast';
+  el.innerHTML=`<span class="t-icon">${icon||icons[type]||'ℹ️'}</span><span class="t-msg">${msg}</span><span class="t-close" onclick="this.parentElement.remove()">✕</span>`;
+  c.appendChild(el);
+  setTimeout(()=>{ el.classList.add('toast-out'); setTimeout(()=>el.remove(),320); },3500);
+}
+
+// ============================================================
+// SOUND
+// ============================================================
+let audioCtx=null;
+function getAudio(){ if(!audioCtx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null; audioCtx=new AC(); } if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
+function playSound(type) {
+  try {
+    const ctx=getAudio(); if(!ctx) return;
+    const now=ctx.currentTime;
+    const tone=(f,s,d,v,w='sine')=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=w; o.frequency.value=f; g.gain.setValueAtTime(.0001,now+s); g.gain.linearRampToValueAtTime(v,now+s+.02); g.gain.exponentialRampToValueAtTime(.0001,now+s+d); o.connect(g); g.connect(ctx.destination); o.start(now+s); o.stop(now+s+d+.02); };
+    if(type==='success'){ tone(660,0,.12,.14); tone(880,.1,.2,.14); }
+    else if(type==='error'){ tone(220,0,.18,.16,'square'); tone(160,.16,.26,.16,'square'); }
+    else if(type==='notify'){ tone(520,0,.1,.1); }
+    else if(type==='click'){ tone(720,0,.05,.06); }
+    else if(type==='alarm'){ for(let i=0;i<4;i++){ tone(880,i*.25,.2,.2); tone(1046,i*.25+.12,.15,.15); } }
+  } catch(e){}
+}
+
+// ============================================================
+// CLOCK
+// ============================================================
+let clockInterval=null, alarmTime=null, alarmFired=false;
+function startClock() {
+  if(clockInterval) clearInterval(clockInterval);
+  drawClock(); clockInterval=setInterval(()=>{ drawClock(); checkAlarm(); },1000);
+}
+function drawClock() {
+  const now=new Date();
+  const el=document.getElementById('clockDigital');
+  if(el) el.textContent=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const ds=document.getElementById('clockDateStr');
+  if(ds) ds.textContent=now.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const canvas=document.getElementById('clockCanvas'); if(!canvas) return;
+  const ctx=canvas.getContext('2d'); const cx=70,cy=70,r=62;
+  ctx.clearRect(0,0,140,140);
+  // face
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.06)'; ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1.5; ctx.stroke();
+  // tick marks
+  for(let i=0;i<60;i++){
+    const a=(i/60)*Math.PI*2-Math.PI/2; const big=i%5===0;
+    const x1=cx+Math.cos(a)*(r-(big?10:5)), y1=cy+Math.sin(a)*(r-(big?10:5));
+    const x2=cx+Math.cos(a)*(r-2), y2=cy+Math.sin(a)*(r-2);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    ctx.strokeStyle=big?'rgba(255,255,255,.7)':'rgba(255,255,255,.3)'; ctx.lineWidth=big?2:1; ctx.stroke();
+  }
+  // hours hand
+  const h=now.getHours()%12, m=now.getMinutes(), s=now.getSeconds();
+  const ha=((h+m/60)/12)*Math.PI*2-Math.PI/2;
+  drawHand(ctx,cx,cy,ha,r*.55,4,'rgba(255,255,255,.95)');
+  // minutes hand
+  const ma=((m+s/60)/60)*Math.PI*2-Math.PI/2;
+  drawHand(ctx,cx,cy,ma,r*.78,3,'rgba(255,255,255,.9)');
+  // seconds hand
+  const sa=(s/60)*Math.PI*2-Math.PI/2;
+  drawHand(ctx,cx,cy,sa,r*.85,1.5,'#ff4444');
+  // center dot
+  ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+}
+function drawHand(ctx,cx,cy,a,len,w,color){
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a)*len,cy+Math.sin(a)*len);
+  ctx.strokeStyle=color; ctx.lineWidth=w; ctx.lineCap='round'; ctx.stroke();
+}
+function setAlarm(){
+  const v=document.getElementById('alarmInput').value; if(!v){ showToast('Lütfen alarm saati seçin','error'); return; }
+  alarmTime=v; alarmFired=false;
+  document.getElementById('alarmIndicator').style.display='block';
+  document.getElementById('alarmTimeDisp').textContent=v;
+  showToast(`Alarm ${v} için kuruldu 🔔`,'success');
+}
+function clearAlarm(){ alarmTime=null; document.getElementById('alarmIndicator').style.display='none'; showToast('Alarm iptal edildi','info'); }
+function checkAlarm(){
+  if(!alarmTime||alarmFired) return;
+  const now=new Date(); const hs=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  if(hs===alarmTime){ alarmFired=true; playSound('alarm'); showToast(`⏰ Alarm! Saat ${alarmTime}`,'info','⏰'); }
+}
+
+// ============================================================
+// SYSTEM CLOCK
+// ============================================================
+function startSystemClock() {
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0'), m=String(now.getMinutes()).padStart(2,'0'), s=String(now.getSeconds()).padStart(2,'0');
+  const el=document.getElementById('liveTime'); if(el) el.textContent=`${h}:${m}`;
+  const ge=document.getElementById('gadClock'); if(ge) ge.textContent=`${h}:${m}:${s}`;
+  const de=document.getElementById('liveDate'); if(de) de.textContent=now.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
+  if(document.getElementById('win-clock')?.style.display==='flex') drawClock();
+  if(alarmTime&&!alarmFired) checkAlarm();
+}
+
+// ============================================================
+// DISK / NET GADGETS
+// ============================================================
+function updateDiskGadget() {
+  diskUsedGB=Math.max(40,Math.min(DISK_TOTAL_GB,diskUsedGB+(Math.random()*.6-.15)));
+  const pct=Math.round((diskUsedGB/DISK_TOTAL_GB)*100);
+  const bar=document.getElementById('diskBar'), text=document.getElementById('diskText');
+  if(!bar||!text) return;
+  bar.style.width=pct+'%'; bar.style.background=pct>90?'#e04040':pct>75?'#e0a040':'#3ad162';
+  text.textContent=`${diskUsedGB.toFixed(0)} / ${DISK_TOTAL_GB} GB (${pct}%)`;
+  const wd=document.getElementById('wdgDiskBar'), wdv=document.getElementById('wdgDiskVal');
+  if(wd){ wd.style.width=pct+'%'; } if(wdv) wdv.textContent=pct+'%';
+}
+function updateNetGadget() {
+  if(Math.random()<.05) netConnected=!netConnected;
+  const el=document.getElementById('netStatus'), se=document.getElementById('netSystray');
+  if(!el) return;
+  if(netConnected){ const ping=Math.floor(Math.random()*40)+8; el.innerHTML=`📶 Bağlı <span style="opacity:.65;font-size:9px;">(${ping}ms)</span>`; el.style.color='white'; if(se) se.textContent='📶'; }
+  else { el.innerHTML='📵 Bağlantı Yok'; el.style.color='#ff8080'; if(se) se.textContent='📵'; }
+}
+function toggleSidebar(){ document.getElementById('sidebarPanel').classList.toggle('collapsed'); }
+function buildGadgetGraph(){
+  const c=document.getElementById('gadGraph'); if(!c) return;
+  for(let i=0;i<22;i++){ const b=document.createElement('div'); b.className='graph-bar'; b.style.height='20%'; c.appendChild(b); }
+  setInterval(()=>{ document.querySelectorAll('.graph-bar').forEach(b=>b.style.height=(Math.floor(Math.random()*75)+10)+'%'); },1000);
+}
+
+// ============================================================
+// TASK MANAGER
+// ============================================================
+function openTaskManager(){ openWin('win-taskmgr'); }
+function startTaskManagerLoop(){
+  renderTaskManager();
+  if(taskmgrInterval) clearInterval(taskmgrInterval);
+  taskmgrInterval=setInterval(renderTaskManager,1200);
+}
+function switchTmTab(tab){
+  document.querySelectorAll('.tm-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tm-tab-'+tab).classList.add('active');
+  document.getElementById('tm-proc-view').style.display=tab==='proc'?'flex':'none';
+  document.getElementById('tm-perf-view').style.display=tab==='perf'?'flex':'none';
+}
+function renderTaskManager(){
+  const win=document.getElementById('win-taskmgr');
+  if(!win||win.style.display!=='flex'){ if(taskmgrInterval){clearInterval(taskmgrInterval);taskmgrInterval=null;} return; }
+  const list=document.getElementById('taskmgrList'); if(!list) return;
+  const openApps=apps.filter(a=>{ const w=document.getElementById(a.target); return w&&w.style.display==='flex'; });
+  list.innerHTML='';
+  if(!openApps.length){ list.innerHTML='<div class="taskmgr-empty">Çalışan işlem yok 😴</div>'; }
+  openApps.forEach(app=>{
+    if(!(app.id in taskFreezeState)) taskFreezeState[app.id]={frozen:false,cpu:8+Math.random()*12};
+    const st=taskFreezeState[app.id];
+    if(!st.frozen){ st.cpu=Math.max(2,Math.min(97,st.cpu+(Math.random()*20-10))); if(Math.random()<.03){ st.frozen=true; st.cpu=99; playSound('error'); showToast(`${app.name} yanıt vermiyor!`,'error',app.icon); } }
+    const row=document.createElement('div'); row.className='taskmgr-row'+(st.frozen?' frozen':'');
+    const col=st.frozen?'#e04040':st.cpu>70?'#e0a040':'#3ad162';
+    row.innerHTML=`<div class="tm-name"><span>${app.icon}</span>${app.name}</div><div class="tm-status">${st.frozen?'Yanıt Vermiyor':'Çalışıyor'}</div><div class="tm-bar-wrap"><div class="tm-bar" style="width:${Math.round(st.cpu)}%;background:${col};"></div></div><div class="tm-cpu-val">%${Math.round(st.cpu)}</div><button class="${st.frozen?'tm-end-btn':'tm-end-ghost'}" onclick="endTask('${app.id}','${app.target}')">${st.frozen?'Sonlandır':'Kapat'}</button>`;
+    list.appendChild(row);
+  });
+  document.getElementById('taskmgrCount').textContent=`${openApps.length} işlem`;
+  // perf charts
+  const cpu=Math.round(openApps.reduce((s,a)=>s+(taskFreezeState[a.id]?.cpu||10),0)/Math.max(1,openApps.length));
+  const ram=Math.round(45+openApps.length*5+Math.random()*5);
+  perfHistory.cpu.push(cpu); if(perfHistory.cpu.length>40) perfHistory.cpu.shift();
+  perfHistory.ram.push(ram); if(perfHistory.ram.length>40) perfHistory.ram.shift();
+  const ce=document.getElementById('tmCpuPct'); if(ce) ce.textContent=cpu+'%';
+  const re=document.getElementById('tmRamPct'); if(re) re.textContent=ram+'%';
+  drawPerfChart('perfCpuCanvas',perfHistory.cpu,'#3ad162');
+  drawPerfChart('perfRamCanvas',perfHistory.ram,'#4aa8ff');
+  // widget perf
+  const cb=document.getElementById('wdgCpuBar'),cv=document.getElementById('wdgCpuVal');
+  const rb=document.getElementById('wdgRamBar'),rv=document.getElementById('wdgRamVal');
+  if(cb){cb.style.width=cpu+'%';} if(cv) cv.textContent=cpu+'%';
+  if(rb){rb.style.width=ram+'%';} if(rv) rv.textContent=ram+'%';
+}
+function drawPerfChart(canvasId,data,color){
+  const canvas=document.getElementById(canvasId); if(!canvas) return;
+  const ctx=canvas.getContext('2d'), w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#f8fafe'; ctx.fillRect(0,0,w,h);
+  // grid lines
+  ctx.strokeStyle='#e0e8f0'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){ const y=h*(i/4); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  if(!data.length) return;
+  ctx.beginPath();
+  data.forEach((v,i)=>{ const x=w*(i/(data.length-1||1)), y=h*(1-v/100); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.strokeStyle=color; ctx.lineWidth=2; ctx.stroke();
+  ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
+  ctx.fillStyle=color+'30'; ctx.fill();
+}
+function endTask(id,target){
+  if(target==='win-taskmgr') return;
+  const btn=event&&event.target;
+  if(btn){ btn.disabled=true; btn.textContent='⏳'; btn.style.opacity='0.5'; }
+  setTimeout(()=>{
+    closeWin(target);
+    delete taskFreezeState[id];
+    playSound('notify');
+    showToast(`İşlem sonlandırıldı`,'info','⚙️');
+    renderTaskManager();
+  }, 700);
+}
+
+// ============================================================
+// EXPLORER
+// ============================================================
+let currentExplorerFolder='sistem', explorerNavStack=['sistem'];
+const explorerData={
+  sistem:{ nav:'💻 Sistem (C:)', title:'Sistem (C:)', items:[{name:'Windows',icon:'🗂️',type:'locked'},{name:'Program Files',icon:'🗂️',type:'locked'},{name:'Kullanıcılar',icon:'👤',type:'locked'},{name:'Sistem_Bilgisi.txt',icon:'📄',type:'info',content:'CEMILE OS v18.0 "Win11 Edition"\n\nSürüm: Windows 11 Pro Tarzı\nİşlemci: Cemile Çekirdeği X (Sanal)\nBellek: 16 GB Sanal RAM\nDisk: 256 GB SSD (Sanal)\nGPU: Cemile Grafik Birimi\nLisans: Sınırsız Eğlence Lisansı 🎉'},{name:'kayit_defteri.sys',icon:'⚙️',type:'locked'},{name:'cemile_kernel.dll',icon:'🧩',type:'locked'},{name:'boot.ini',icon:'📄',type:'locked'}]},
+  oyunlar:{ nav:'🎮 Oyunlar', title:'Oyunlar', items:[] },
+  belgeler:{ nav:'📄 Belgeler', title:'Belgeler', items:[{name:'Merhaba.txt',icon:'📝',type:'note',content:'Cemile OS\'a hoş geldiniz!\nBu dosyayı Not Defteri\'nde açabilirsiniz.'},{name:'Proje_Notları.txt',icon:'📝',type:'note',content:'Proje: Cemile OS v18\n- Win11 özellikleri eklendi\n- Solitaire eklendi\n- Hava Durumu eklendi'},{name:'Fotoğraflar',icon:'🖼️',type:'soon'},{name:'Müzik',icon:'🎵',type:'soon'}]},
+  indirilenler:{ nav:'⬇️ İndirilenler', title:'İndirilenler', items:[{name:'cemile_update.exe',icon:'⚙️',type:'installer'},{name:'tatil_2024.zip',icon:'🗜️',type:'unsupported'},{name:'playlist.m3u',icon:'🎵',type:'unsupported'},{name:'setup.msi',icon:'📦',type:'unsupported'}]},
+  masaustu:{ nav:'🖥️ Masaüstü', title:'Masaüstü', items:[] },
+};
+function getOyunItems(){ return apps.filter(a=>a.isGame).map(a=>({name:a.name,icon:a.icon,type:'app',target:a.target})).concat([{name:'Solitaire',icon:'🃏',type:'app',target:'win-solitaire'},{name:'Yeni Oyun Yükle...',icon:'➕',type:'store'}]); }
+function getMasaustuItems(){ return apps.map(a=>({name:a.name,icon:a.icon,type:'app',target:a.target})); }
+function buildExplorerNav(){
+  const nav=document.getElementById('explorerNav'); if(!nav) return;
+  nav.innerHTML='';
+  Object.entries(explorerData).forEach(([key,folder])=>{
+    const el=document.createElement('div'); el.className='explorer-nav-item'+(key===currentExplorerFolder?' active':''); el.id='enav-'+key;
+    el.innerHTML=folder.nav; el.onclick=()=>renderExplorer(key);
+    nav.appendChild(el);
+  });
+}
+function renderExplorer(key){
+  currentExplorerFolder=key;
+  const folder=explorerData[key]; if(!folder) return;
+  document.querySelectorAll('.explorer-nav-item').forEach(el=>el.classList.remove('active'));
+  const nv=document.getElementById('enav-'+key); if(nv) nv.classList.add('active');
+  const crumb=document.getElementById('explorerBreadcrumb'); if(crumb) crumb.textContent=`Bu Bilgisayar > ${folder.title}`;
+  const addr=document.getElementById('explorerAddr'); if(addr) addr.value=`C:\\${folder.title}`;
+  const grid=document.getElementById('explorerGrid'); if(!grid) return;
+  grid.innerHTML='';
+  let items=folder.items;
+  if(key==='oyunlar') items=getOyunItems();
+  if(key==='masaustu') items=getMasaustuItems();
+  if(!items.length){ grid.innerHTML='<div style="padding:20px;color:#999;font-size:12px;text-align:center;">Bu klasör boş.</div>'; return; }
+  items.forEach((file,idx)=>{
+    const el=document.createElement('div'); el.className='explorer-item icon-pop'; el.style.animationDelay=idx*.03+'s';
+    el.innerHTML=`<div class="ei-icon">${file.icon}</div><div class="ei-name">${file.name}</div>`;
+    el.ondblclick=()=>handleExplorerOpen(file);
+    el.onclick=()=>{ document.querySelectorAll('.explorer-item').forEach(x=>x.classList.remove('selected')); el.classList.add('selected'); };
+    grid.appendChild(el);
+  });
+  const st=document.getElementById('explorerStatus'); if(st) st.textContent=`${items.length} öğe`;
+}
+function handleExplorerOpen(file){
+  if(file.type==='app'){ const ins=apps.some(a=>a.target===file.target); if(ins||file.target==='win-solitaire') openWin(file.target); else{ showToast(`"${file.name}" yüklü değil.`,'error','📦'); openWin('win-store'); } }
+  else if(file.type==='store') openWin('win-store');
+  else if(file.type==='info'||file.type==='note'){ openWin('win-notepad'); const ta=document.getElementById('notepadText'); if(ta) ta.value=file.content; updateNotepadStatus(); }
+  else if(file.type==='locked') showToast(`"${file.name}" için erişim izni yok 🔒`,'error');
+  else if(file.type==='soon') showToast(`"${file.name}" yakında geliyor! 🚀`,'info');
+  else if(file.type==='installer'){ diskUsedGB=Math.min(DISK_TOTAL_GB,diskUsedGB+2.5); updateDiskGadget(); playSound('success'); showToast(`"${file.name}" çalıştırıldı ✅`,'success'); }
+  else if(file.type==='unsupported') showToast(`"${file.name}" için uygulama yok ❌`,'error');
+}
+function explorerBack(){ if(explorerNavStack.length>1){ explorerNavStack.pop(); renderExplorer(explorerNavStack[explorerNavStack.length-1]); } }
+function explorerUp(){ renderExplorer('sistem'); }
+
+// ============================================================
+// NOTEPAD
+// ============================================================
+function updateNotepadStatus(){
+  const ta=document.getElementById('notepadText'); if(!ta) return;
+  document.getElementById('notepadCharCount').textContent=ta.value.length+' karakter';
+}
+function notepadNew(){ const ta=document.getElementById('notepadText'); if(ta) ta.value=''; updateNotepadStatus(); }
+function notepadSave(){
+  const ta=document.getElementById('notepadText'); if(!ta) return;
+  const blob=new Blob([ta.value],{type:'text/plain'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='not.txt'; a.click(); showToast('Dosya indirildi 💾','success');
+}
+function notepadWrap(){
+  const ta=document.getElementById('notepadText'); if(!ta) return;
+  ta.style.whiteSpace=ta.style.whiteSpace==='nowrap'?'pre-wrap':'nowrap';
+}
+function changeNotepadFont(){
+  const f=document.getElementById('notepadFont').value;
+  document.getElementById('notepadText').style.fontFamily=f;
+}
+function changeNotepadFontSize(){
+  const s=document.getElementById('notepadFontSize').value;
+  document.getElementById('notepadText').style.fontSize=s+'px';
+}
+
+// ============================================================
+// PAINT
+// ============================================================
+const paintCanvas=document.getElementById('paintCanvas');
+const pCtx=paintCanvas.getContext('2d');
+let painting=false, paintTool='pen', paintStartX=0, paintStartY=0;
+let paintUndoStack=[], paintSnapshot=null;
+
+function initPaint(){
+  pCtx.fillStyle='#fff'; pCtx.fillRect(0,0,paintCanvas.width,paintCanvas.height);
+  savePaintSnapshot();
+}
+function savePaintSnapshot(){
+  paintUndoStack.push(pCtx.getImageData(0,0,paintCanvas.width,paintCanvas.height));
+  if(paintUndoStack.length>30) paintUndoStack.shift();
+}
+function undoPaint(){
+  if(paintUndoStack.length<2) return;
+  paintUndoStack.pop();
+  pCtx.putImageData(paintUndoStack[paintUndoStack.length-1],0,0);
+}
+function setPaintTool(tool){
+  paintTool=tool;
+  document.querySelectorAll('.paint-tool-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('ptool-'+tool); if(btn) btn.classList.add('active');
+}
+function clearCanvas(){ initPaint(); showToast('Tuval temizlendi','info'); }
+function savePaintImage(){
+  const a=document.createElement('a'); a.href=paintCanvas.toDataURL(); a.download='resim.png'; a.click();
+  showToast('Resim indirildi 💾','success');
+}
+paintCanvas.addEventListener('mousedown',e=>{
+  if(paintTool==='fill'){ floodFill(e); return; }
+  if(paintTool==='text'){ paintText(e); return; }
+  savePaintSnapshot(); painting=true;
+  const r=paintCanvas.getBoundingClientRect();
+  paintStartX=e.clientX-r.left; paintStartY=e.clientY-r.top;
+  if(paintTool==='pen'||paintTool==='brush'||paintTool==='spray'||paintTool==='eraser'){
+    pCtx.beginPath(); pCtx.moveTo(paintStartX,paintStartY);
+  }
+  paintSnapshot=pCtx.getImageData(0,0,paintCanvas.width,paintCanvas.height);
+});
+paintCanvas.addEventListener('mouseup',()=>{ painting=false; pCtx.beginPath(); });
+paintCanvas.addEventListener('mouseleave',()=>{ if(painting){ painting=false; pCtx.beginPath(); } });
+paintCanvas.addEventListener('mousemove',e=>{
+  if(!painting) return;
+  const r=paintCanvas.getBoundingClientRect();
+  const x=e.clientX-r.left, y=e.clientY-r.top;
+  const size=+document.getElementById('paintSize').value;
+  const color=document.getElementById('paintColor').value;
+  if(paintTool==='pen'){ pCtx.lineWidth=size; pCtx.lineCap='round'; pCtx.strokeStyle=color; pCtx.lineTo(x,y); pCtx.stroke(); pCtx.beginPath(); pCtx.moveTo(x,y); }
+  else if(paintTool==='brush'){ pCtx.lineWidth=size*2.5; pCtx.lineCap='round'; pCtx.strokeStyle=color+'bb'; pCtx.lineTo(x,y); pCtx.stroke(); pCtx.beginPath(); pCtx.moveTo(x,y); }
+  else if(paintTool==='eraser'){ pCtx.lineWidth=size*3; pCtx.lineCap='round'; pCtx.strokeStyle='#fff'; pCtx.lineTo(x,y); pCtx.stroke(); pCtx.beginPath(); pCtx.moveTo(x,y); }
+  else if(paintTool==='spray'){ sprayPaint(x,y,size*4,color); }
+  else if((paintTool==='line'||paintTool==='rect'||paintTool==='circle')&&paintSnapshot){ pCtx.putImageData(paintSnapshot,0,0); drawShape(paintTool,paintStartX,paintStartY,x,y,size,color); }
+});
+function sprayPaint(x,y,r,color){
+  pCtx.fillStyle=color;
+  for(let i=0;i<30;i++){ const a=Math.random()*Math.PI*2, d=Math.random()*r; pCtx.fillRect(x+Math.cos(a)*d,y+Math.sin(a)*d,1,1); }
+}
+function drawShape(tool,x1,y1,x2,y2,size,color){
+  pCtx.lineWidth=size; pCtx.strokeStyle=color; pCtx.beginPath();
+  if(tool==='line'){ pCtx.moveTo(x1,y1); pCtx.lineTo(x2,y2); }
+  else if(tool==='rect'){ pCtx.rect(x1,y1,x2-x1,y2-y1); }
+  else if(tool==='circle'){ const rx=(x2-x1)/2, ry=(y2-y1)/2; pCtx.ellipse(x1+rx,y1+ry,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2); }
+  pCtx.stroke();
+}
+function floodFill(e){
+  savePaintSnapshot();
+  const r=paintCanvas.getBoundingClientRect();
+  const x=Math.round(e.clientX-r.left), y=Math.round(e.clientY-r.top);
+  const color=document.getElementById('paintColor').value;
+  const imgData=pCtx.getImageData(0,0,paintCanvas.width,paintCanvas.height);
+  const target=getPixel(imgData,x,y);
+  const fill=hexToRgb(color);
+  if(!fill) return;
+  if(target[0]===fill[0]&&target[1]===fill[1]&&target[2]===fill[2]) return;
+  const stack=[[x,y]]; const visited=new Set();
+  while(stack.length){
+    const [cx,cy]=stack.pop(); const key=cx+','+cy;
+    if(visited.has(key)) continue; visited.add(key);
+    const px=getPixel(imgData,cx,cy);
+    if(cx<0||cy<0||cx>=paintCanvas.width||cy>=paintCanvas.height) continue;
+    if(Math.abs(px[0]-target[0])>30||Math.abs(px[1]-target[1])>30||Math.abs(px[2]-target[2])>30) continue;
+    setPixel(imgData,cx,cy,fill);
+    stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+  }
+  pCtx.putImageData(imgData,0,0);
+}
+function getPixel(d,x,y){ const i=(y*d.width+x)*4; return [d.data[i],d.data[i+1],d.data[i+2],d.data[i+3]]; }
+function setPixel(d,x,y,c){ const i=(y*d.width+x)*4; d.data[i]=c[0];d.data[i+1]=c[1];d.data[i+2]=c[2];d.data[i+3]=255; }
+function hexToRgb(h){ const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r?[parseInt(r[1],16),parseInt(r[2],16),parseInt(r[3],16)]:null; }
+function paintText(e){
+  const t=prompt('Yazılacak metin:'); if(!t) return;
+  const r=paintCanvas.getBoundingClientRect();
+  const x=e.clientX-r.left, y=e.clientY-r.top;
+  const size=+document.getElementById('paintSize').value;
+  pCtx.fillStyle=document.getElementById('paintColor').value;
+  pCtx.font=`${Math.max(12,size*4)}px Segoe UI`;
+  pCtx.fillText(t,x,y);
+}
+
+// ============================================================
+// CALCULATOR
+// ============================================================
+let calcExpr='', calcHistory=[];
+function calcInput(v){ if(calcExpr==='0'&&/\d/.test(v)) calcExpr=''; calcExpr+=v; updateCalcDisplay(); }
+function updateCalcDisplay(){ const el=document.getElementById('calcDisplay'); if(!el) return; el.value=calcExpr||'0'; el.className='calc-display'+(calcExpr.length>12?' small':''); }
+function calcClear(){ calcExpr=''; updateCalcDisplay(); }
+function calcCE(){ calcExpr=calcExpr.slice(0,-1); updateCalcDisplay(); }
+function calcBackspace(){ calcExpr=calcExpr.slice(0,-1); updateCalcDisplay(); }
+function calcPlusMinus(){ if(!calcExpr||calcExpr==='0') return; calcExpr=calcExpr.startsWith('-')?calcExpr.slice(1):'-'+calcExpr; updateCalcDisplay(); }
+function calcSqrt(){
+  try{ const v=parseFloat(calcExpr); if(isNaN(v)||v<0) throw new Error(); const r=Math.sqrt(v); calcHistory.unshift({expr:`√(${v})`,result:r}); renderCalcHistory(); calcExpr=String(r); updateCalcDisplay(); playSound('success'); } catch(e){ document.getElementById('calcDisplay').value='Hata'; calcExpr=''; playSound('error'); }
+}
+function calcEquals(){
+  try{
+    if(!calcExpr||!/^[0-9+\-*/.%\s]+$/.test(calcExpr)) throw new Error('invalid');
+    const se=calcExpr.replace(/(\d+(\.\d+)?)%/g,'($1/100)');
+    let result=Function('"use strict";return('+se+')')();
+    if(!isFinite(result)) throw new Error();
+    result=Math.round(result*1e8)/1e8;
+    calcHistory.unshift({expr:calcExpr,result});
+    if(calcHistory.length>6) calcHistory.pop();
+    renderCalcHistory();
+    document.getElementById('calcDisplay').value=result;
+    calcExpr=String(result); playSound('success');
+  } catch(e){ document.getElementById('calcDisplay').value='Hata'; calcExpr=''; playSound('error'); }
+}
+function renderCalcHistory(){
+  const el=document.getElementById('calcHistory'); if(!el) return;
+  el.innerHTML=calcHistory.map(h=>`<div class="calc-history-item"><div class="ch-expr">${h.expr} =</div><div class="ch-result">${h.result}</div></div>`).join('');
+  el.scrollTop=0;
+}
+
+// ============================================================
+// RPS
+// ============================================================
+let rpsScore={p:0,c:0}, rpsStreak=0, rpsHistoryArr=[];
+const RPS_E={rock:'✊',paper:'✋',scissors:'✌️'};
+function rpsPlay(choice){
+  const opts=['rock','paper','scissors'];
+  const cpu=opts[Math.floor(Math.random()*3)];
+  const pe=document.getElementById('rpsPlayerEmoji'), ce=document.getElementById('rpsCpuEmoji');
+  pe.classList.add('rps-shake'); ce.classList.add('rps-shake'); playSound('click');
+  setTimeout(()=>{
+    pe.classList.remove('rps-shake'); ce.classList.remove('rps-shake');
+    pe.textContent=RPS_E[choice]; ce.textContent=RPS_E[cpu];
+    const res=choice===cpu?'draw':((choice==='rock'&&cpu==='scissors')||(choice==='paper'&&cpu==='rock')||(choice==='scissors'&&cpu==='paper'))?'win':'lose';
+    const re=document.getElementById('rpsResult');
+    if(res==='win'){ rpsScore.p++; rpsStreak=Math.max(0,rpsStreak)+1; re.textContent='Kazandın! 🎉'; re.style.color='#2a8a3e'; playSound('success'); }
+    else if(res==='lose'){ rpsScore.c++; rpsStreak=Math.min(0,rpsStreak)-1; re.textContent='Kaybettin! 😢'; re.style.color='#c81818'; playSound('error'); }
+    else { rpsStreak=0; re.textContent='Berabere! 🤝'; re.style.color='#e0a040'; playSound('notify'); }
+    document.getElementById('rpsScore').textContent=`Sen: ${rpsScore.p}  |  Bilgisayar: ${rpsScore.c}`;
+    const streak=rpsStreak>1?`${rpsStreak} galibiyet serisi! 🔥`:rpsStreak<-1?`${Math.abs(rpsStreak)} mağlubiyet serisi 😰`:'';
+    document.getElementById('rpsStreak').textContent=streak||'—';
+    rpsHistoryArr.unshift(res==='win'?'✅':res==='lose'?'❌':'🟡');
+    if(rpsHistoryArr.length>10) rpsHistoryArr.pop();
+    document.getElementById('rpsHistory').textContent=rpsHistoryArr.join(' ');
+  },450);
+}
+function rpsReset(){ rpsScore={p:0,c:0}; rpsStreak=0; rpsHistoryArr=[]; document.getElementById('rpsScore').textContent='Sen: 0  |  Bilgisayar: 0'; document.getElementById('rpsStreak').textContent='—'; document.getElementById('rpsResult').textContent='Bir seçim yap!'; document.getElementById('rpsPlayerEmoji').textContent='❔'; document.getElementById('rpsCpuEmoji').textContent='❔'; document.getElementById('rpsHistory').textContent='—'; }
+
+// ============================================================
+// MUSIC
+// ============================================================
+const musicTracks=[{name:'Cemile Lo-fi Beats',artist:'Cemile Records',dur:'3:45'},{name:'Aero Akşamı',artist:'Lo-fi Collective',dur:'4:12'},{name:'Bulut Dansı',artist:'Sky Studio',dur:'3:28'},{name:'Gece Modu Senfonisi',artist:'Night Vibes',dur:'5:02'},{name:'Pixel Rüyası',artist:'8bit Studio',dur:'2:58'},{name:'Sabah Kahvesi',artist:'Morning Beats',dur:'3:33'}];
+let mTrack=0, mPlaying=false, mProgress=0, mInterval=null, mShuffle=false, mRepeat=false;
+function musicToggle(){
+  mPlaying=!mPlaying;
+  document.getElementById('musicPlayBtn').textContent=mPlaying?'⏸️':'▶️';
+  document.getElementById('musicArt').classList.toggle('playing',mPlaying);
+  playSound('click');
+  if(mPlaying){ if(mInterval) clearInterval(mInterval); mInterval=setInterval(musicTick,200); }
+  else{ clearInterval(mInterval); mInterval=null; }
+}
+function musicTick(){
+  const win=document.getElementById('win-music');
+  if(!win||win.style.display!=='flex'){ clearInterval(mInterval); mInterval=null; return; }
+  mProgress+=.5;
+  if(mProgress>=100){ mProgress=0; if(mRepeat) return; if(mShuffle) mTrack=Math.floor(Math.random()*musicTracks.length); else musicNext(); return; }
+  document.getElementById('musicProgressBar').style.width=mProgress+'%';
+  // time
+  const track=musicTracks[mTrack]; const [tm,ts]=track.dur.split(':').map(Number);
+  const totalSec=tm*60+ts; const curSec=Math.round((mProgress/100)*totalSec);
+  document.getElementById('musicTimeCurrent').textContent=`${Math.floor(curSec/60)}:${String(curSec%60).padStart(2,'0')}`;
+  document.querySelectorAll('#musicEq span').forEach(b=>b.style.height=(Math.random()*80+15)+'%');
+}
+function musicNext(){ mTrack=(mTrack+1)%musicTracks.length; updateMusicUI(); mProgress=0; }
+function musicPrev(){ mTrack=(mTrack-1+musicTracks.length)%musicTracks.length; updateMusicUI(); mProgress=0; }
+function updateMusicUI(){
+  const t=musicTracks[mTrack];
+  const tn=document.getElementById('musicTrackName'); if(tn) tn.textContent=t.name;
+  const ta=document.getElementById('musicArtist'); if(ta) ta.textContent=t.artist;
+  const tt=document.getElementById('musicTimeTotal'); if(tt) tt.textContent=t.dur;
+  document.getElementById('musicProgressBar').style.width='0%';
+}
+function toggleShuffle(){ mShuffle=!mShuffle; const b=document.getElementById('shuffleBtn'); if(b) b.style.color=mShuffle?'#4aa8ff':'rgba(255,255,255,.7)'; }
+function toggleRepeat(){ mRepeat=!mRepeat; const b=document.getElementById('repeatBtn'); if(b) b.style.color=mRepeat?'#4aa8ff':'rgba(255,255,255,.7)'; }
+function seekMusic(e){ const wrap=e.currentTarget; const r=wrap.getBoundingClientRect(); mProgress=Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100)); document.getElementById('musicProgressBar').style.width=mProgress+'%'; }
+function setMusicVol(v){ /* volume control visual only */ }
+
+// ============================================================
+// MINESWEEPER
+// ============================================================
+let mineGrid=[], mineTimerInv=null, mineSecs=0, mineOver=false, mineStarted=false;
+let mineLearnMode=false;
+
+// Emoji durumu güncelle — kritik hamlede değişir
+function updateMineEmoji(state){
+  const btn=document.getElementById('mine-reset');
+  if(!btn) return;
+  const emojis={
+    normal:'😊', danger:'😬', ohno:'😱', win:'😎',
+    dead:'😵', thinking:'🤔', flag:'🧐'
+  };
+  btn.textContent=emojis[state]||'😊';
+}
+
+function initMines(){
+  if(mineTimerInv) clearInterval(mineTimerInv); mineTimerInv=null; mineSecs=0; mineOver=false; mineStarted=false;
+  document.getElementById('mine-timer').textContent='000';
+  const container=document.getElementById('mine-grid'); container.innerHTML=''; mineGrid=[];
+  updateMineEmoji('normal');
+  let mCount=0;
+  for(let r=0;r<10;r++){
+    mineGrid[r]=[];
+    for(let c=0;c<10;c++){
+      const isMine=Math.random()<.15; if(isMine) mCount++;
+      mineGrid[r][c]={r,c,isMine,revealed:false,flagged:false};
+      const cell=document.createElement('div'); cell.className='mine-cell'; cell.id=`mc-${r}-${c}`;
+      cell.onclick=()=>mineClick(r,c);
+      cell.oncontextmenu=e=>{ e.preventDefault(); mineFlag(r,c); };
+      // Fareyi hücrenin üzerine getirince emoji değişsin
+      cell.onmouseenter=()=>{ if(!mineOver&&!mineGrid[r][c].revealed) updateMineEmoji('thinking'); };
+      cell.onmouseleave=()=>{ if(!mineOver) updateMineEmoji('normal'); };
+      container.appendChild(cell);
+    }
+  }
+  document.getElementById('mine-count').textContent=String(mCount).padStart(3,'0');
+}
+
+function mineClick(r,c){
+  if(mineOver||mineGrid[r][c].revealed||mineGrid[r][c].flagged) return;
+  if(!mineStarted){ mineStarted=true; mineTimerInv=setInterval(()=>{ mineSecs=Math.min(999,mineSecs+1); document.getElementById('mine-timer').textContent=String(mineSecs).padStart(3,'0'); },1000); }
+  const cell=mineGrid[r][c];
+
+  // Kritik hamle: etraftaki açık alanda mayın var mı kontrol et
+  let adjMines=0;
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+    const nr=r+dr, nc=c+dc;
+    if(nr>=0&&nr<10&&nc>=0&&nc<10&&mineGrid[nr][nc].isMine&&!mineGrid[nr][nc].revealed) adjMines++;
+  }
+  if(adjMines>=2) updateMineEmoji('danger');
+  else if(cell.isMine){ updateMineEmoji('ohno'); setTimeout(()=>updateMineEmoji('dead'),200); }
+  else updateMineEmoji('thinking');
+
+  if(cell.isMine){ revealMine(r,c); return; }
+  mineReveal(r,c);
+  updateMineEmoji('normal');
+  checkMineWin();
+}
+
+function revealMine(r,c){
+  mineOver=true; clearInterval(mineTimerInv);
+  updateMineEmoji('dead');
+  for(let row=0;row<10;row++) for(let col=0;col<10;col++){
+    if(mineGrid[row][col].isMine){ const el=document.getElementById(`mc-${row}-${col}`); if(el){ el.textContent='💣'; el.classList.add('revealed'); if(row===r&&col===c) el.classList.add('mine-hit'); } }
+  }
+  showToast('Mayına bastınız! 💥','error','💣'); playSound('error');
+}
+
+function mineReveal(r,c){
+  if(r<0||r>=10||c<0||c>=10) return;
+  const cell=mineGrid[r][c]; if(cell.revealed||cell.flagged) return;
+  cell.revealed=true;
+  const el=document.getElementById(`mc-${r}-${c}`); el.classList.add('revealed');
+  let adj=0;
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ const nr=r+dr,nc=c+dc; if(nr>=0&&nr<10&&nc>=0&&nc<10&&mineGrid[nr][nc].isMine) adj++; }
+  const colors=['','#0000ff','#008000','#ff0000','#000080','#800000','#008080','#000000','#808080'];
+  if(adj>0){ el.textContent=adj; el.style.color=colors[adj]; }
+  else { for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) mineReveal(r+dr,c+dc); }
+}
+
+function mineFlag(r,c){
+  if(mineOver||mineGrid[r][c].revealed) return;
+  mineGrid[r][c].flagged=!mineGrid[r][c].flagged;
+  const el=document.getElementById(`mc-${r}-${c}`);
+  el.textContent=mineGrid[r][c].flagged?'🚩':''; el.classList.toggle('flagged',mineGrid[r][c].flagged);
+  updateMineEmoji(mineGrid[r][c].flagged?'flag':'normal');
+  setTimeout(()=>{ if(!mineOver) updateMineEmoji('normal'); },600);
+}
+
+function checkMineWin(){
+  const unrevealed=mineGrid.flat().filter(c=>!c.revealed&&!c.isMine);
+  if(!unrevealed.length){ mineOver=true; clearInterval(mineTimerInv); updateMineEmoji('win'); showToast(`Tebrikler! ${mineSecs}sn — Kazandınız! 🎉`,'success','💣'); playSound('success'); }
+}
+
+// ÖĞREN MODALI
+function openMineLearn(){
+  showInfoModal('📖 Mayın Tarlası — Nasıl Oynanır?',`
+    <div style="font-size:12px;line-height:1.8;color:#333;">
+      <div style="font-size:20px;text-align:center;margin-bottom:10px;">💣 Mayın Tarlası Rehberi</div>
+
+      <b>🎯 Amaç:</b><br>
+      Mayın olmayan tüm kareleri açmak! Mayına basmadan kazanırsın.
+      <br><br>
+
+      <b>🖱️ Sol Tık — Kare Aç:</b><br>
+      Kareye sol tıklayarak açarsın. Açılan kare boşsa çevresindeki kareler de otomatik açılır.
+      Bir sayı görürsen, o sayı etraftaki 8 karede kaç mayın olduğunu söyler.
+      <br><br>
+
+      <b>🚩 Sağ Tık — Bayrak Koy:</b><br>
+      Bir karede mayın olduğunu düşünüyorsan sağ tıkla bayrak koy! Bayraklı kareler açılmaz.
+      <br><br>
+
+      <b>🔢 Sayıların Anlamı:</b><br>
+      <span style="color:#0000ff">1</span> = Etrafında 1 mayın &nbsp;
+      <span style="color:#008000">2</span> = 2 mayın &nbsp;
+      <span style="color:#ff0000">3</span> = 3 mayın
+      <br><br>
+
+      <b>😊 Emoji İpuçları:</b><br>
+      😊 Normal &nbsp;|&nbsp; 🤔 Düşünüyor &nbsp;|&nbsp; 😬 Tehlike! &nbsp;|&nbsp; 😱 Patlama! &nbsp;|&nbsp; 😵 Kaybettin &nbsp;|&nbsp; 😎 Kazandın!
+      <br><br>
+
+      <b>💡 Strateji İpuçları:</b><br>
+      • Önce köşe ve kenardaki kareleri aç — genelde güvenlidir.<br>
+      • Bir sayı etrafındaki tüm mayınları bayrakla işaretlerse, geri kalan kareler güvenlidir.<br>
+      • "1-2-1" dizisini görürsen, ortadaki 2'nin iki yanından biri mayındır.<br>
+      • Baskı altında tahmin yapmak zorundaysan en az mayın olasılığı olan kenarı seç.
+      <br><br>
+
+      <div style="text-align:center;padding:8px;background:#f0f8ff;border-radius:6px;margin-top:6px;">
+        🏆 Hedef: En kısa sürede tüm kareleri aç!
+      </div>
+    </div>
+  `);
+}
+
+// ============================================================
+// SOLITAIRE
+// ============================================================
+const SUITS=['♠','♥','♦','♣'], RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const RED_SUITS=['♥','♦'];
+let solDeck=[], solTableau=[], solFoundation=[], solStock=[], solWaste=[], solSelected=null, solSelectedFrom=null, solScore=0, solMoves=[], solTimerInv=null, solSecs=0;
+
+function initSolitaire(){
+  solDeck=[]; for(const s of SUITS) for(const r of RANKS) solDeck.push({suit:s,rank:r,face:false});
+  for(let i=solDeck.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [solDeck[i],solDeck[j]]=[solDeck[j],solDeck[i]]; }
+  solTableau=[[],[],[],[],[],[],[]]; solFoundation=[[],[],[],[]]; solStock=[]; solWaste=[]; solSelected=null; solScore=0; solMoves=[];
+  let idx=0;
+  for(let col=0;col<7;col++) for(let row=col;row<7;row++){ const card={...solDeck[idx++]}; if(row===col) card.face=true; solTableau[col].push(card); }
+  while(idx<52) solStock.push({...solDeck[idx++]});
+  if(solTimerInv) clearInterval(solTimerInv); solSecs=0;
+  solTimerInv=setInterval(()=>{ solSecs++; const el=document.getElementById('solTime'); if(el) el.textContent=`${Math.floor(solSecs/60)}:${String(solSecs%60).padStart(2,'0')}`; },1000);
+  renderSolitaire();
+}
+function renderSolitaire(){
+  const g=document.getElementById('solGame'); if(!g) return;
+  document.getElementById('solScore').textContent=solScore;
+  g.innerHTML='';
+  // TOP ROW
+  const top=document.createElement('div'); top.style.cssText='display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;';
+  // Stock
+  const stockEl=document.createElement('div');
+  if(solStock.length){ const c=document.createElement('div'); c.className='card back'; c.style.cssText='width:54px;min-height:72px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;color:rgba(255,255,255,.4);'; c.textContent='🂠'; c.onclick=()=>solDrawCard(); stockEl.appendChild(c); }
+  else { const c=document.createElement('div'); c.className='card empty-slot'; c.style.cssText='width:54px;cursor:pointer;'; c.textContent='↺'; c.onclick=()=>solReset(); stockEl.appendChild(c); }
+  top.appendChild(stockEl);
+  // Waste
+  const wasteEl=document.createElement('div');
+  if(solWaste.length){ const c=createCardEl(solWaste[solWaste.length-1]); c.onclick=()=>solSelectWaste(); wasteEl.appendChild(c); }
+  else { const c=document.createElement('div'); c.className='card empty-slot'; c.style.width='54px'; wasteEl.appendChild(c); }
+  top.appendChild(wasteEl);
+  top.appendChild(document.createElement('div')).style.flex='1';
+  // Foundation
+  solFoundation.forEach((pile,fi)=>{
+    const fd=document.createElement('div');
+    if(pile.length){ const c=createCardEl(pile[pile.length-1]); c.onclick=()=>solMoveToFoundation(); fd.appendChild(c); }
+    else { const c=document.createElement('div'); c.className='card empty-slot'; c.style.cssText='width:54px;min-height:72px;display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(255,255,255,.3);'; c.textContent=SUITS[fi]; c.onclick=()=>{ if(solSelected&&solSelectedFrom){ tryFoundation(fi,solSelected,solSelectedFrom); } }; fd.appendChild(c); }
+    top.appendChild(fd);
+  });
+  g.appendChild(top);
+  // Tableau
+  const tab=document.createElement('div'); tab.style.cssText='display:flex;gap:6px;flex:1;overflow:hidden;';
+  solTableau.forEach((col,ci)=>{
+    const colEl=document.createElement('div'); colEl.style.cssText='flex:1;position:relative;display:flex;flex-direction:column;';
+    if(!col.length){ const es=document.createElement('div'); es.className='card empty-slot'; es.style.cssText='width:100%;max-width:64px;'; es.onclick=()=>{ if(solSelected?.rank==='K'&&solSelectedFrom) moveCard(ci,solSelected,solSelectedFrom); }; colEl.appendChild(es); }
+    col.forEach((card,ri)=>{
+      const c=createCardEl(card); c.style.marginTop=ri===0?'0':'-55px'; c.style.position='relative';
+      c.onclick=()=>{ if(!card.face) return; if(solSelected){ moveCard(ci,card,{type:'tableau',col:ci,idx:ri}); } else { solSelected=card; solSelectedFrom={type:'tableau',col:ci,idx:ri}; renderSolitaire(); } };
+      if(solSelected===card) c.style.boxShadow='0 0 0 2.5px #fbbf24, 0 4px 8px rgba(0,0,0,.3)';
+      colEl.appendChild(c);
+    });
+    tab.appendChild(colEl);
+  });
+  g.appendChild(tab);
+  checkSolWin();
+}
+function createCardEl(card){
+  const el=document.createElement('div');
+  if(!card.face){ el.className='card back'; el.style.cssText='width:54px;min-height:72px;cursor:pointer;'; el.textContent=''; return el; }
+  const isRed=RED_SUITS.includes(card.suit);
+  el.className=`card ${isRed?'red':'black'}`; el.style.cssText='width:54px;min-height:72px;cursor:pointer;';
+  el.innerHTML=`<div class="c-top">${card.rank}${card.suit}</div><div class="c-center">${card.suit}</div><div class="c-bot">${card.rank}${card.suit}</div>`;
+  return el;
+}
+function solDrawCard(){ if(!solStock.length) return; const c={...solStock.pop(),face:true}; solWaste.push(c); solScore=Math.max(0,solScore-2); renderSolitaire(); }
+function solReset(){ while(solWaste.length){ solStock.push({...solWaste.pop(),face:false}); } renderSolitaire(); }
+function solSelectWaste(){ if(!solWaste.length) return; solSelected=solWaste[solWaste.length-1]; solSelectedFrom={type:'waste'}; renderSolitaire(); }
+function moveCard(targetCol,targetCard,from){
+  if(!solSelected||!solSelectedFrom){ solSelected=null; return; }
+  const sel=solSelected, selFrom=solSelectedFrom;
+  // Check valid move
+  const col=solTableau[targetCol]; const top=col[col.length-1];
+  const rankIdx=RANKS.indexOf(sel.rank);
+  const topRankIdx=top?RANKS.indexOf(top.rank):-1;
+  const isRed=RED_SUITS.includes(sel.suit);
+  const topRed=top?RED_SUITS.includes(top.suit):false;
+  const valid=(!top&&sel.rank==='K')||(top&&top.face&&topRankIdx===rankIdx+1&&isRed!==topRed);
+  if(valid){
+    // Remove from source
+    removeSelected(selFrom,sel);
+    // Add to target
+    if(selFrom.type==='tableau'){ const srcCol=solTableau[selFrom.col]; const cards=srcCol.splice(selFrom.idx); cards.forEach(c=>solTableau[targetCol].push(c)); }
+    else solTableau[targetCol].push({...sel,face:true});
+    flipLastCard(selFrom);
+    solScore+=5; solMoves.push({sel,selFrom,targetCol});
+  }
+  solSelected=null; solSelectedFrom=null; renderSolitaire();
+}
+function removeSelected(from,card){
+  if(from.type==='waste'){ solWaste.pop(); }
+  else if(from.type==='tableau'){ solTableau[from.col]=solTableau[from.col].slice(0,from.idx); }
+}
+function flipLastCard(from){ if(from.type==='tableau'){ const col=solTableau[from.col]; if(col.length&&!col[col.length-1].face) col[col.length-1].face=true; } }
+function tryFoundation(fi,card,from){ const idx=RANKS.indexOf(card.rank); const pile=solFoundation[fi]; const valid=(idx===0&&!pile.length)||(pile.length&&RANKS.indexOf(pile[pile.length-1].rank)===idx-1&&pile[pile.length-1].suit===card.suit); if(valid){ removeSelected(from,card); pile.push({...card,face:true}); flipLastCard(from); solScore+=10; solSelected=null; solSelectedFrom=null; renderSolitaire(); } }
+function solMoveToFoundation(){
+  if(!solSelected||!solSelectedFrom) return;
+  for(let fi=0;fi<4;fi++) tryFoundation(fi,solSelected,solSelectedFrom);
+}
+function solUndo(){ if(!solMoves.length) return; solMoves.pop(); playSound('click'); showToast('Geri alındı','info'); }
+function solHint(){ showToast('İpucu: Yüz aşağı kartı çevirin!','info','💡'); }
+function checkSolWin(){ if(solFoundation.every(p=>p.length===13)){ clearInterval(solTimerInv); showToast(`🎉 Kazandınız! ${solSecs}sn — Puan: ${solScore}`,'success','🃏'); playSound('success'); } }
+
+// ============================================================
+// SHUTDOWN
+// ============================================================
+function systemShutdown(){
+  const o=document.getElementById('shutdownOverlay');
+  o.style.display='flex';
+  // İlk kararma
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    o.classList.add('active');
+  }));
+  // Metni değiştir
+  const messages=['Windows kapatılıyor...','Güncellemeler yükleniyor...','Lütfen bekleyin...','Güle güle! 👋'];
+  let i=0;
+  const interval=setInterval(()=>{
+    i++;
+    const el=document.getElementById('shutdownText');
+    if(el&&i<messages.length) el.textContent=messages[i];
+    if(i>=messages.length-1) clearInterval(interval);
+  },2200);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload=function(){
+  // Paint white bg
+  initPaint();
+  // Desktop
+  renderDesktop();
+  // Mines
+  initMines();
+  // Gadgets
+  buildGadgetGraph();
+  setInterval(startSystemClock,1000); startSystemClock();
+  updateDiskGadget(); updateNetGadget();
+  setInterval(updateDiskGadget,4000); setInterval(updateNetGadget,5000);
+  // Explorer
+  buildExplorerNav(); renderExplorer(currentExplorerFolder);
+  // Store
+  renderStore();
+  // Wallpaper
+  changeWallpaper('default');
+  // Start menu
+  renderStartMenuApps();
+  // Widgets
+  updateWidgetWeather();
+  // Weather widget initial
+  const weatherBody=document.getElementById('weatherBody'); if(weatherBody) renderWeather();
+  // Click handler to close menus
+  document.addEventListener('click',closeAllContextMenus);
+  // Keyboard shortcuts
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){ closeStartAndContext(); closeModal(); closeVDesks(); closeWidgets(); }
+    if(e.ctrlKey&&e.key==='z'){ undoPaint(); }
+    if(e.key==='F5') refreshDesktop();
+  });
+  // Show welcome toast
+  setTimeout(()=>showToast('Cemile OS v18\'e hoş geldiniz! 🎉','success','🪟'),1000);
+  // Periodic notification
+  setTimeout(()=>{ addNotification('🌤️','Hava Durumu','Frankfurt\'ta bugün 18°C parçalı bulutlu.'); },3000);
+};
+</script>
+</body>
+</html>
